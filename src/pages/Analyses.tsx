@@ -449,7 +449,14 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               )})}
               <div className="md:col-span-2 lg:col-span-3 flex justify-center mt-4">
                 <button 
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    if (mode === 'form') {
+                      navigate('/historico');
+                    } else {
+                      setShowForm(false);
+                      setSelectedTrack(null);
+                    }
+                  }}
                   className="text-slate-500 hover:text-slate-700 font-medium flex items-center gap-2"
                 >
                   <X className="w-4 h-4" />
@@ -729,7 +736,15 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               <div className="flex justify-end gap-5 pt-6 border-t border-slate-100 dark:border-slate-800 mt-4">
                 <button 
                   type="button"
-                  onClick={() => { setShowForm(false); setEditingAnalysis(null); }}
+                  onClick={() => { 
+                    if (mode === 'form') {
+                      navigate('/historico');
+                    } else {
+                      setShowForm(false); 
+                      setEditingAnalysis(null); 
+                      setSelectedTrack(null);
+                    }
+                  }}
                   className="px-8 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold text-base"
                 >
                   Cancelar

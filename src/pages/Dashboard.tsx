@@ -179,28 +179,29 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
     const endDate = new Date(endDateStr + 'T23:59:59');
 
     // Productivity calculation
+    const analystMap = new Map<string, User>(analysts.map(a => [normalizeString(a.name), a]));
     let filteredConsolidated = [...consolidatedData].filter(c => c && c.analyst);
     
-    // Only include productivity for analysts that are in the current database
-    const activeAnalystNames = new Set(analysts.map(a => normalizeString(a.name)));
-    filteredConsolidated = filteredConsolidated.filter(c => activeAnalystNames.has(normalizeString(c.analyst)));
+    // Filter by analyst presence in DB and apply filters
+    filteredConsolidated = filteredConsolidated.filter(c => {
+      const analyst = analystMap.get(normalizeString(c.analyst));
+      if (!analyst) return false;
 
-    if (filters.start_date) {
-      filteredConsolidated = filteredConsolidated.filter(c => c.date >= filters.start_date);
-    }
-    if (filters.end_date) {
-      filteredConsolidated = filteredConsolidated.filter(c => c.date <= filters.end_date);
-    }
-    if (filters.track) {
-      filteredConsolidated = filteredConsolidated.filter(c => c.track === filters.track);
-    }
-    if (filters.analyst_id) {
-      const analyst = analysts.find(u => String(u.id) === String(filters.analyst_id));
-      if (analyst) {
-        const normalizedAnalystName = normalizeString(analyst.name);
-        filteredConsolidated = filteredConsolidated.filter(c => normalizeString(c.analyst) === normalizedAnalystName);
-      }
-    }
+      // Filter by date
+      if (filters.start_date && c.date < filters.start_date) return false;
+      if (filters.end_date && c.date > filters.end_date) return false;
+
+      // Filter by track (using analyst's current track as requested)
+      if (filters.track && analyst.esteira !== filters.track) return false;
+
+      // Filter by supervisor
+      if (filters.supervisor_name && analyst.supervisor !== filters.supervisor_name) return false;
+
+      // Filter by analyst_id
+      if (filters.analyst_id && String(analyst.id) !== String(filters.analyst_id)) return false;
+
+      return true;
+    });
 
     let currentDay = new Date(startDate);
     let weekNumber = 1;
@@ -237,7 +238,8 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
 
     // Productivity by Track
     const productivityByTrackMap = filteredConsolidated.reduce((acc: any, c: any) => {
-      const track = c.track || 'Desconhecido';
+      const analyst = analystMap.get(normalizeString(c.analyst));
+      const track = analyst?.esteira || c.track || 'Desconhecido';
       acc[track] = (acc[track] || 0) + 1;
       return acc;
     }, {});
@@ -247,8 +249,9 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
 
     // Productivity by Analyst
     const productivityByAnalystMap = filteredConsolidated.reduce((acc: any, c: any) => {
-      const analyst = c.analyst || 'Desconhecido';
-      acc[analyst] = (acc[analyst] || 0) + 1;
+      const analystData = analystMap.get(normalizeString(c.analyst));
+      const analystName = analystData?.name || c.analyst || 'Desconhecido';
+      acc[analystName] = (acc[analystName] || 0) + 1;
       return acc;
     }, {});
     const productivityByAnalyst = Object.entries(productivityByAnalystMap)
