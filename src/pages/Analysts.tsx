@@ -73,6 +73,7 @@ export const Analysts: React.FC = () => {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
   const canEdit = currentUser.role === 'Administrador' || permissions['analistas'] === 'edit';
+  const canViewStats = canEdit || permissions['analistas'] === 'view';
 
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
@@ -376,8 +377,8 @@ export const Analysts: React.FC = () => {
                 </div>
               </div>
               
-              {canEdit && (
-                <div className="flex gap-1 shrink-0 ml-2">
+              <div className="flex gap-1 shrink-0 ml-2">
+                {canViewStats && (
                   <button 
                     onClick={() => { setSelectedAnalyst(analyst); setShowStatsModal(true); }}
                     className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all"
@@ -385,20 +386,24 @@ export const Analysts: React.FC = () => {
                   >
                     <BarChart3 className="w-4 h-4" />
                   </button>
-                  <button 
-                    onClick={() => handleEdit(analyst)}
-                    className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => setAnalystToDelete(analyst.id)}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+                )}
+                {canEdit && (
+                  <>
+                    <button 
+                      onClick={() => handleEdit(analyst)}
+                      className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => setAnalystToDelete(analyst.id)}
+                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3 mb-6">
