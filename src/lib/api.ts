@@ -1,7 +1,16 @@
 import { User, Supervisor, Analysis } from '../types';
-import { db, auth, ref, get, set, update, remove, push } from './firebase';
+import { db, auth, logsDb, ref, get, set, update, remove, push } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
 import { DEMAND_TYPES, TAGS } from '../constants';
+
+export const normalizeString = (str: string) => {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+};
 
 const DEFAULT_PERMISSIONS = {
   dashboard: 'view',
@@ -104,7 +113,7 @@ const logAction = async (action: string, details: string) => {
   try {
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
-    const logsRef = ref(db, 'logs');
+    const logsRef = ref(logsDb, 'logs');
     const newLogRef = push(logsRef);
     await set(newLogRef, {
       id: Date.now(),
@@ -556,7 +565,7 @@ export const api = {
   },
 
   async getLogs() {
-    const snapshot = await get(ref(db, 'logs'));
+    const snapshot = await get(ref(logsDb, 'logs'));
     if (!snapshot.exists()) return [];
     const logs = Object.values(snapshot.val()) as any[];
     return logs.map(log => {
@@ -581,7 +590,7 @@ export const api = {
   },
 
   async deleteLogs(period: string) {
-    const snapshot = await get(ref(db, 'logs'));
+    const snapshot = await get(ref(logsDb, 'logs'));
     if (!snapshot.exists()) return { success: true };
     
     const logs = snapshot.val();
@@ -609,7 +618,7 @@ export const api = {
     });
     
     if (Object.keys(updates).length > 0) {
-      await update(ref(db, 'logs'), updates);
+      await update(ref(logsDb, 'logs'), updates);
     }
     return { success: true };
   },
@@ -778,6 +787,46 @@ export const api = {
     }, {} as Record<string, number>);
     const byTrack = Object.entries(byTrackMap).map(([track, count]) => ({ track, count }));
 
+    // Productivity aggregation
+    const analystsSnapshot = await get(ref(db, 'analysts'));
+    const allAnalysts = analystsSnapshot.exists() ? Object.values(analystsSnapshot.val()) as any[] : [];
+    
+    const productivityByAnalystMap: Record<string, number> = {};
+    const productivityByTrackMap: Record<string, number> = {};
+    
+    allAnalysts.forEach(analyst => {
+      if (params?.analyst_id && Number(analyst.id) !== Number(params.analyst_id)) return;
+      if (params?.supervisor_name && analyst.supervisor !== params.supervisor_name) return;
+      
+      let analystTotal = 0;
+      if (analyst.productivity) {
+        Object.entries(analyst.productivity).forEach(([dateKey, value]) => {
+          if (params?.start_date && dateKey < params.start_date) return;
+          if (params?.end_date && dateKey > params.end_date) return;
+          
+          const val = Number(value) || 0;
+          analystTotal += val;
+          
+          if (!params?.track || analyst.esteira === params.track) {
+            productivityByTrackMap[analyst.esteira] = (productivityByTrackMap[analyst.esteira] || 0) + val;
+          }
+        });
+      }
+      
+      if (!params?.track || analyst.esteira === params.track) {
+        productivityByAnalystMap[analyst.name] = (productivityByAnalystMap[analyst.name] || 0) + analystTotal;
+      }
+    });
+
+    const productivityByAnalyst = Object.entries(productivityByAnalystMap)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const productivityByTrack = Object.entries(productivityByTrackMap)
+      .map(([track, count]) => ({ track, count }))
+      .sort((a, b) => b.count - a.count);
+
     const evolution: any[] = [];
     const referenceDate = params?.start_date ? new Date(params.start_date + 'T12:00:00Z') : new Date();
     const year = referenceDate.getUTCFullYear();
@@ -803,11 +852,32 @@ export const api = {
         return dTime >= weekStart.getTime() && dTime <= weekEnd.getTime();
       });
 
-      const daily: { day: string, count: number, errors: number }[] = [];
+      let weekProductivity = 0;
+      allAnalysts.forEach(analyst => {
+        if (params?.analyst_id && Number(analyst.id) !== Number(params.analyst_id)) return;
+        if (params?.supervisor_name && analyst.supervisor !== params.supervisor_name) return;
+        if (params?.track && analyst.esteira !== params.track) return;
+
+        if (analyst.productivity) {
+          Object.entries(analyst.productivity).forEach(([dateKey, value]) => {
+            const parts = dateKey.split('-');
+            if (parts.length !== 3) return;
+            const [y, m, d] = parts.map(Number);
+            const dTime = Date.UTC(y, m - 1, d);
+            if (dTime >= weekStart.getTime() && dTime <= weekEnd.getTime()) {
+              weekProductivity += (Number(value) || 0);
+            }
+          });
+        }
+      });
+
+      const daily: { day: string, count: number, errors: number, productivity: number }[] = [];
       const daysInWeek = (weekEnd.getUTCDate() - weekStart.getUTCDate()) + 1;
       for (let d = 0; d < daysInWeek; d++) {
         const dayDate = new Date(Date.UTC(year, month, weekStart.getUTCDate() + d));
         const dayLabel = `${dayDate.getUTCDate().toString().padStart(2, '0')}/${(dayDate.getUTCMonth() + 1).toString().padStart(2, '0')}`;
+        const dayKey = `${dayDate.getUTCFullYear()}-${String(dayDate.getUTCMonth() + 1).padStart(2, '0')}-${String(dayDate.getUTCDate()).padStart(2, '0')}`;
+        
         const dayAnalyses = weekAnalyses.filter(a => {
           if (!a.treatment_date) return false;
           const parts = String(a.treatment_date).split('-');
@@ -815,11 +885,23 @@ export const api = {
           const [ay, am, ad] = parts.map(Number);
           return ad === dayDate.getUTCDate() && (am - 1) === dayDate.getUTCMonth() && ay === dayDate.getUTCFullYear();
         });
-        if (dayAnalyses.length > 0) {
+
+        let dayProductivity = 0;
+        allAnalysts.forEach(analyst => {
+          if (params?.analyst_id && Number(analyst.id) !== Number(params.analyst_id)) return;
+          if (params?.supervisor_name && analyst.supervisor !== params.supervisor_name) return;
+          if (params?.track && analyst.esteira !== params.track) return;
+          if (analyst.productivity && analyst.productivity[dayKey]) {
+            dayProductivity += (Number(analyst.productivity[dayKey]) || 0);
+          }
+        });
+
+        if (dayAnalyses.length > 0 || dayProductivity > 0) {
           daily.push({ 
             day: dayLabel, 
             count: dayAnalyses.length,
-            errors: dayAnalyses.filter(a => a.status === 'Sim').length
+            errors: dayAnalyses.filter(a => a.status === 'Sim').length,
+            productivity: dayProductivity
           });
         }
       }
@@ -828,6 +910,7 @@ export const api = {
         week: weekLabel,
         count: weekAnalyses.length,
         errors: weekAnalyses.filter(a => a.status === 'Sim').length,
+        productivity: weekProductivity,
         daily
       });
     }
@@ -851,7 +934,9 @@ export const api = {
       byTrack,
       evolution,
       errorsByType,
-      errorsByTrack
+      errorsByTrack,
+      productivityByAnalyst,
+      productivityByTrack
     };
   },
 
@@ -943,6 +1028,54 @@ export const api = {
       await remove(ref(db, `tracks/${trackKey}`));
       await logAction('Excluir Esteira', `Esteira ID ${id} excluída`);
     }
+    return { success: true };
+  },
+
+  async saveConsolidatedData(data: any[]) {
+    await set(ref(db, 'consolidated_data'), data);
+    await logAction('Consolidar Base', `${data.length} registros consolidados`);
+    return { success: true };
+  },
+
+  async getConsolidatedData() {
+    const snapshot = await get(ref(db, 'consolidated_data'));
+    if (!snapshot.exists()) return [];
+    return snapshot.val() as any[];
+  },
+
+  async deleteConsolidatedData() {
+    await remove(ref(db, 'consolidated_data'));
+    await logAction('Excluir Base Consolidada', 'Toda a base de dados consolidada foi excluída');
+    return { success: true };
+  },
+
+  async updateAnalystsProductivity(productivityMap: Record<string, Record<string, number>>) {
+    const snapshot = await get(ref(db, 'analysts'));
+    if (!snapshot.exists()) return { success: false };
+    
+    const analystsObj = snapshot.val();
+    const updates: any = {};
+    
+    Object.keys(analystsObj).forEach(key => {
+      const analyst = analystsObj[key];
+      const normalizedAnalystName = normalizeString(analyst.name);
+      
+      if (productivityMap[normalizedAnalystName]) {
+        // Sanitize keys in the inner map to ensure they are safe for Firebase
+        const sanitizedMap: Record<string, number> = {};
+        Object.entries(productivityMap[normalizedAnalystName]).forEach(([dateKey, value]) => {
+          const safeKey = dateKey.replace(/[\.\#\$\/\[\]]/g, '-');
+          sanitizedMap[safeKey] = value;
+        });
+        updates[`analysts/${key}/productivity`] = sanitizedMap;
+      }
+    });
+    
+    if (Object.keys(updates).length > 0) {
+      await update(ref(db), updates);
+      await logAction('Atualizar Produtividade', `Produtividade de ${Object.keys(updates).length} analistas atualizada`);
+    }
+    
     return { success: true };
   }
 };

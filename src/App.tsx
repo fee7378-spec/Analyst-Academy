@@ -11,6 +11,7 @@ import { Tracks } from './pages/Tracks';
 import { Logs } from './pages/Logs';
 import { Profile } from './pages/Profile';
 import { Profiles } from './pages/Profiles';
+import { DataProcessing } from './pages/DataProcessing';
 
 export default function App() {
   React.useEffect(() => {
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/logs" element={<Logs />} />
           <Route path="/perfis" element={<Profiles />} />
           <Route path="/perfil" element={<Profile />} />
+          <Route path="/processamento" element={<DataProcessing />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

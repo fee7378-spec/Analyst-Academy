@@ -13,8 +13,21 @@ const firebaseConfig = {
   measurementId: "G-KMSR274KP3"
 };
 
+const firebaseConfigLogs = {
+  apiKey: "AIzaSyAvCdM3HxbYY644lOsZtiO21fxQzf_VT4w",
+  authDomain: "log-de-atividades.firebaseapp.com",
+  databaseURL: "https://log-de-atividades-default-rtdb.firebaseio.com",
+  projectId: "log-de-atividades",
+  storageBucket: "log-de-atividades.firebasestorage.app",
+  messagingSenderId: "364783945233",
+  appId: "1:364783945233:web:0be0192fac06cbd706d3b0",
+  measurementId: "G-W75F9G8QJ9"
+};
+
 const app = initializeApp(firebaseConfig);
+const logsApp = initializeApp(firebaseConfigLogs, "logs");
+
 export const db = getDatabase(app);
-export const logsDb = db; // Use the same database for logs to avoid hanging if the second DB is not created
+export const logsDb = getDatabase(logsApp);
 export const auth = getAuth(app);
 export { ref, set, get, update, remove, push, onValue };

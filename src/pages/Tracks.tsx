@@ -64,7 +64,7 @@ export const Tracks: React.FC = () => {
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
-  const canEdit = permissions['esteiras'] === 'edit';
+  const canEdit = currentUser.role === 'Administrador' || permissions['esteiras'] === 'edit';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -105,6 +105,10 @@ export const Tracks: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     setSaving(true);
     try {
       if (editingTrack) {
@@ -126,6 +130,10 @@ export const Tracks: React.FC = () => {
   };
 
   const handleMassEditSubmit = async () => {
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     if (!massEditForm.tag.trim() && !massEditForm.demandType.trim()) {
       toast.error('Preencha pelo menos uma Tag ou Tipo de Demanda');
       return;
@@ -171,6 +179,10 @@ export const Tracks: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     try {
       await api.deleteTrack(id);
       toast.success('Esteira excluída com sucesso');

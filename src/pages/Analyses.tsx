@@ -95,9 +95,9 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
-  const canEditHistorico = permissions['historico'] === 'edit';
-  const canEditNovaMonitoria = permissions['nova-monitoria'] === 'edit';
-  const canViewAnalysts = permissions['analistas'] !== 'none';
+  const canEditHistorico = currentUser.role === 'Administrador' || permissions['historico'] === 'edit';
+  const canEditNovaMonitoria = currentUser.role === 'Administrador' || permissions['nova-monitoria'] === 'edit';
+  const canViewAnalysts = currentUser.role === 'Administrador' || permissions['analistas'] !== 'none';
 
   // Form State
   const [formData, setFormData] = useState({
@@ -122,7 +122,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [mode]);
 
   const loadData = async () => {
     setLoading(true);
@@ -143,6 +143,17 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
+
+    // Permission guard
+    if (editingAnalysis && !canEditHistorico) {
+      toast.error('Você não tem permissão para editar monitorias no histórico');
+      return;
+    }
+    if (!editingAnalysis && !canEditNovaMonitoria) {
+      toast.error('Você não tem permissão para realizar novas monitorias');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const finalData = {
@@ -221,6 +232,10 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   };
 
   const handleDelete = async (id: number) => {
+    if (!canEditHistorico) {
+      toast.error('Você não tem permissão para excluir monitorias');
+      return;
+    }
     try {
       await api.deleteAnalysis(id);
       toast.success('Análise excluída com sucesso');
@@ -721,9 +736,17 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 </button>
                 <button 
                   type="submit"
+                  disabled={submitting}
                   className="px-12 py-3.5 rounded-2xl bg-blue-500 text-white hover:bg-blue-600 transition-all font-bold text-base shadow-xl shadow-blue-500/20 disabled:opacity-50"
                 >
-                  {editingAnalysis ? 'Atualizar Monitoria' : 'Salvar Monitoria'}
+                  {submitting ? (
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      Salvando...
+                    </div>
+                  ) : (
+                    editingAnalysis ? 'Atualizar Monitoria' : 'Salvar Monitoria'
+                  )}
                 </button>
               </div>
             </form>

@@ -29,7 +29,7 @@ export const Logs: React.FC = () => {
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
-  const canEditLogs = permissions['logs'] === 'edit';
+  const canEditLogs = currentUser.role === 'Administrador' || permissions['logs'] === 'edit';
 
   useEffect(() => {
     loadLogs();
@@ -75,6 +75,10 @@ export const Logs: React.FC = () => {
   };
 
   const handleClearLogs = async () => {
+    if (!canEditLogs) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     setClearing(true);
     try {
       await api.deleteLogs(clearPeriod);

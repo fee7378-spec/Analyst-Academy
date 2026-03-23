@@ -11,7 +11,8 @@ import {
   UserCircle,
   Shield,
   Layers,
-  Plus
+  Plus,
+  FileSpreadsheet
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -43,6 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user }) => {
     { icon: UserCheck, label: 'Supervisores', path: '/supervisores', id: 'supervisores' },
     { icon: Users, label: 'Analistas', path: '/analistas', id: 'analistas' },
     { icon: History, label: 'Histórico', path: '/historico', id: 'historico' },
+    { icon: FileSpreadsheet, label: 'Processamento', path: '/processamento', id: 'processamento' },
     { icon: ClipboardList, label: 'Logs', path: '/logs', id: 'logs' },
     { icon: Shield, label: 'Perfis de acesso', path: '/perfis', id: 'perfis' },
     { icon: UserCircle, label: 'Meu Perfil', path: '/perfil', id: 'perfil' },

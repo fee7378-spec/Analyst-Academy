@@ -64,6 +64,10 @@ export const Supervisors: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     setSaving(true);
     try {
       if (editingSupervisor) {
@@ -85,6 +89,10 @@ export const Supervisors: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
+    if (!canEdit) {
+      toast.error('Você não tem permissão para excluir supervisores');
+      return;
+    }
     try {
       await api.deleteSupervisor(id);
       toast.success('Supervisor excluído com sucesso');
@@ -235,8 +243,8 @@ export const Supervisors: React.FC = () => {
                     required
                     type="text"
                     value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value, matricula: e.target.value.toLowerCase().replace(/\s+/g, '.')})}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
+                    onChange={e => setFormData({...formData, name: e.target.value.toUpperCase(), matricula: e.target.value.toLowerCase().replace(/\s+/g, '.')})}
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white uppercase"
                   />
                 </div>
                 <div className="space-y-2">

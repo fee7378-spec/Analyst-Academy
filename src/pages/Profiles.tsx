@@ -20,10 +20,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 const MODULES = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'nova-monitoria', label: 'Nova Monitoria' },
+  { id: 'nova-monitoria', label: 'Monitorar' },
   { id: 'supervisores', label: 'Supervisores' },
   { id: 'analistas', label: 'Analistas' },
   { id: 'esteiras', label: 'Esteiras' },
@@ -31,6 +32,7 @@ const MODULES = [
   { id: 'logs', label: 'Log de Atividades' },
   { id: 'perfis', label: 'Perfis de acesso' },
   { id: 'perfil', label: 'Meu Perfil' },
+  { id: 'processamento', label: 'Processamento' },
 ];
 
 const TEMPLATES: Record<string, UserPermissions> = {
@@ -43,7 +45,8 @@ const TEMPLATES: Record<string, UserPermissions> = {
     historico: 'edit',
     logs: 'edit',
     perfis: 'edit',
-    perfil: 'edit'
+    perfil: 'edit',
+    processamento: 'edit'
   },
   'Monitor': {
     dashboard: 'view',
@@ -54,11 +57,12 @@ const TEMPLATES: Record<string, UserPermissions> = {
     historico: 'view',
     logs: 'none',
     perfis: 'none',
-    perfil: 'view'
+    perfil: 'view',
+    processamento: 'none'
   }
 };
 
-const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React.Dispatch<React.SetStateAction<ProfileTemplate[]>> }> = ({ templates, setTemplates }) => {
+const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React.Dispatch<React.SetStateAction<ProfileTemplate[]>>, canEdit: boolean }> = ({ templates, setTemplates, canEdit }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<ProfileTemplate | null>(null);
   const [saving, setSaving] = useState(false);
@@ -67,9 +71,14 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
     description: '',
     permissions: { ...TEMPLATES['Monitor'] }
   });
+  const [templateToDelete, setTemplateToDelete] = useState<ProfileTemplate | null>(null);
 
   const handleSaveTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     setSaving(true);
     try {
       if (selectedTemplate) {
@@ -92,92 +101,145 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
   };
 
   const handleDeleteTemplate = async (template: ProfileTemplate) => {
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     if (template.name === 'Administrador') {
       toast.error('O template Administrador não pode ser excluído.');
       return;
     }
-    if (!window.confirm('Tem certeza que deseja excluir este template?')) return;
+    setTemplateToDelete(template);
+  };
+
+  const confirmDeleteTemplate = async () => {
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
+    if (!templateToDelete) return;
     try {
-      await api.deleteTemplate(template.id);
-      setTemplates(templates.filter(t => t.id !== template.id));
+      await api.deleteTemplate(templateToDelete.id);
+      setTemplates(templates.filter(t => t.id !== templateToDelete.id));
       toast.success('Template excluído com sucesso!');
+      setTemplateToDelete(null);
     } catch (err) {
       toast.error('Erro ao excluir template');
     }
   };
 
+  const handleTemplatePermissionChange = (moduleId: string, level: PermissionLevel) => {
+    if (!canEdit || !selectedTemplate) return;
+    setSelectedTemplate({
+      ...selectedTemplate,
+      permissions: {
+        ...selectedTemplate.permissions,
+        [moduleId]: level
+      }
+    });
+  };
+
   if (selectedTemplate) {
     return (
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         className="space-y-6"
       >
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setSelectedTemplate(null)}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-500"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Editando Template: {selectedTemplate.name}
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400">{selectedTemplate.description}</p>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MODULES.map(module => (
-              <div key={module.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
-                    <Shield className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white">{module.label}</h3>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {(['view', 'edit', 'none'] as PermissionLevel[]).map(level => (
-                    <label key={level} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 cursor-pointer transition-colors">
-                      <input 
-                        type="radio" 
-                        name={`${module.id}-permission`}
-                        value={level}
-                        checked={selectedTemplate.permissions[module.id as keyof typeof selectedTemplate.permissions] === level}
-                        onChange={(e) => setSelectedTemplate({
-                          ...selectedTemplate,
-                          permissions: {
-                            ...selectedTemplate.permissions,
-                            [module.id]: e.target.value as PermissionLevel
-                          }
-                        })}
-                        className="text-blue-500 focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {level === 'view' ? 'Visualizar' : level === 'edit' ? 'Editar' : 'Sem acesso'}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-600">
+                <Shield className="w-10 h-10" />
               </div>
-            ))}
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Editando Template: {selectedTemplate.name}</h2>
+                <p className="text-slate-500 dark:text-slate-400">Configure as permissões padrão para este perfil de acesso</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <button 
+                onClick={() => setSelectedTemplate(null)}
+                className="flex-1 md:flex-none px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium"
+              >
+                {canEdit ? 'Voltar' : 'Fechar'}
+              </button>
+              {canEdit && (
+                <button 
+                  onClick={handleSaveTemplate}
+                  disabled={saving}
+                  className="flex-1 md:flex-none px-8 py-2.5 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Save className="w-5 h-5" />
+                  {saving ? 'Salvando...' : 'Salvar Template'}
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="mt-8 flex justify-end">
-            <button
-              onClick={handleSaveTemplate}
-              disabled={saving}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 font-bold"
-            >
-              <Save className="w-5 h-5" />
-              {saving ? 'Salvando...' : 'Salvar Permissões'}
-            </button>
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {MODULES.map((module) => {
+                const level = selectedTemplate.permissions[module.id as keyof UserPermissions] || 'none';
+                return (
+                  <div 
+                    key={module.id}
+                    className={`p-5 rounded-2xl border transition-all flex items-center justify-between ${
+                      level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-blue-500/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-xl ${level !== 'none' ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                        <Shield className="w-5 h-5" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{module.label}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                      <button
+                        onClick={() => handleTemplatePermissionChange(module.id, 'none')}
+                        disabled={!canEdit}
+                        title="Sem Acesso"
+                        className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                          level === 'none' 
+                            ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 shadow-sm' 
+                            : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                        } disabled:opacity-50`}
+                      >
+                        <EyeOff className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase">Nenhum</span>
+                      </button>
+                      <button
+                        onClick={() => handleTemplatePermissionChange(module.id, 'view')}
+                        disabled={!canEdit}
+                        title="Apenas Visualizar"
+                        className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                          level === 'view' 
+                            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-sm' 
+                            : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                        } disabled:opacity-50`}
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase">Ver</span>
+                      </button>
+                      <button
+                        onClick={() => handleTemplatePermissionChange(module.id, 'edit')}
+                        disabled={!canEdit}
+                        title="Pode Editar"
+                        className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                          level === 'edit' 
+                            ? 'bg-blue-500 text-white shadow-md' 
+                            : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                        } disabled:opacity-50`}
+                      >
+                        <Pencil className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase">Editar</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -188,13 +250,15 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Templates de Permissão</h2>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 font-bold text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Novo Template
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 font-bold text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Novo Template
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -210,14 +274,16 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                   onClick={() => setSelectedTemplate(template)}
                   className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                 >
-                  <Pencil className="w-4 h-4" />
+                  {canEdit ? <Pencil className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
-                <button
-                  onClick={() => handleDeleteTemplate(template)}
-                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {canEdit && (
+                  <button
+                    onClick={() => handleDeleteTemplate(template)}
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
             <div className="text-sm text-slate-600 dark:text-slate-300">
@@ -293,6 +359,15 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        isOpen={templateToDelete !== null}
+        title="Excluir Template"
+        message={`Tem certeza que deseja excluir o template "${templateToDelete?.name}"? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir"
+        onConfirm={confirmDeleteTemplate}
+        onCancel={() => setTemplateToDelete(null)}
+      />
     </div>
   );
 };
@@ -313,13 +388,15 @@ export const Profiles: React.FC = () => {
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
-  const canEdit = permissions['perfis'] === 'edit';
+  const canEdit = currentUser.role === 'Administrador' || permissions['perfis'] === 'edit';
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
-    
-    setResettingPassword(true);
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     try {
       await api.resetPasswordDirect(selectedUser.id, adminPassword);
       toast.success('Senha redefinida para Mudar@123 com sucesso!');
@@ -395,7 +472,11 @@ export const Profiles: React.FC = () => {
   };
 
   const handleDeleteUser = async () => {
-    if (!userToDelete) return;
+    if (userToDelete === null) return;
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     setSaving(true);
     try {
       await api.deleteUser(userToDelete);
@@ -411,6 +492,10 @@ export const Profiles: React.FC = () => {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     setSaving(true);
     try {
       await api.createUser(newUserForm);
@@ -464,7 +549,9 @@ export const Profiles: React.FC = () => {
       historico: 'none',
       logs: 'none',
       perfis: 'none',
-      perfil: 'none'
+      perfil: 'none',
+      esteiras: 'none',
+      processamento: 'none'
     } as UserPermissions;
 
     const newPerms = {
@@ -481,6 +568,10 @@ export const Profiles: React.FC = () => {
 
   const handleSave = async () => {
     if (!selectedUser) return;
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
     setSaving(true);
     try {
       await api.updateUser(selectedUser.id, {
@@ -520,13 +611,15 @@ export const Profiles: React.FC = () => {
           <p className="text-slate-500 dark:text-slate-400">Gerencie as permissões individuais de cada usuário</p>
         </div>
         <div className="flex gap-2">
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 font-bold"
-          >
-            <UserPlus className="w-5 h-5" />
-            Criar novo usuário
-          </button>
+          {canEdit && (
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 font-bold"
+            >
+              <UserPlus className="w-5 h-5" />
+              Criar novo usuário
+            </button>
+          )}
         </div>
       </header>
 
@@ -827,7 +920,7 @@ export const Profiles: React.FC = () => {
         )}
       </AnimatePresence>
       ) : (
-        <TemplatesTab templates={templates} setTemplates={setTemplates} />
+        <TemplatesTab templates={templates} setTemplates={setTemplates} canEdit={canEdit} />
       )}
 
       <AnimatePresence>
@@ -928,8 +1021,8 @@ export const Profiles: React.FC = () => {
                       required
                       type="text"
                       value={newUserForm.name}
-                      onChange={e => setNewUserForm({...newUserForm, name: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
+                      onChange={e => setNewUserForm({...newUserForm, name: e.target.value.toUpperCase()})}
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white uppercase"
                       placeholder="Nome do usuário"
                     />
                   </div>
@@ -1042,48 +1135,14 @@ export const Profiles: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {userToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setUserToDelete(null)}
-              className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 border border-slate-100 dark:border-slate-800 text-center"
-            >
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Trash2 className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Remover Usuário</h2>
-              <p className="text-slate-500 dark:text-slate-400 mb-8">
-                Tem certeza que deseja remover este usuário? Esta ação não pode ser desfeita e o usuário perderá o acesso ao sistema.
-              </p>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => setUserToDelete(null)}
-                  className="flex-1 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleDeleteUser}
-                  disabled={saving}
-                  className="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 disabled:opacity-50"
-                >
-                  {saving ? 'Removendo...' : 'Sim, remover'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ConfirmDialog
+        isOpen={userToDelete !== null}
+        title="Remover Usuário"
+        message="Tem certeza que deseja remover este usuário? Esta ação não pode ser desfeita e o usuário perderá o acesso ao sistema."
+        confirmText={saving ? 'Removendo...' : 'Sim, remover'}
+        onConfirm={handleDeleteUser}
+        onCancel={() => setUserToDelete(null)}
+      />
     </div>
   );
 };

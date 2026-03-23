@@ -12,6 +12,7 @@ export interface UserPermissions {
   perfis: PermissionLevel;
   perfil: PermissionLevel;
   esteiras: PermissionLevel;
+  processamento: PermissionLevel;
 }
 
 export interface User {
@@ -26,6 +27,7 @@ export interface User {
   permissions?: UserPermissions;
   is_first_access?: boolean;
   templateId?: string;
+  productivity?: Record<string, number>;
 }
 
 export interface ProfileTemplate {
