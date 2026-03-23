@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, normalizeString } from '../lib/api';
 import { Analysis, User, AnalysisStatus } from '../types';
 import { 
   Search, 
@@ -14,6 +14,7 @@ import {
   XCircle, 
   AlertCircle,
   Download,
+  Upload,
   X,
   Layers,
   Building2,
@@ -59,6 +60,7 @@ import {
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
+import Papa from 'papaparse';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DEMAND_TYPES, TAGS, getIconDataById } from '../constants';
 import { formatLocalDate, getTodayForInput } from '../utils/date';
@@ -90,8 +92,10 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   }, [mode]);
 
   const [showClearModal, setShowClearModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [clearPeriod, setClearPeriod] = useState('7');
   const [clearing, setClearing] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
@@ -325,6 +329,128 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     } finally {
       setClearing(false);
     }
+  };
+
+  const downloadTemplate = () => {
+    const headers = [
+      'Esteira', 'Demanda', 'Tipo de Demanda', 'Empresa', 'CNPJ', 
+      'Analista', 'Matrícula', 'Data', 'Erro', 'Observação do Erro', 
+      'Tag', 'Observação da Monitoria'
+    ];
+    
+    // Example row
+    const example = [
+      'Extranet', '123456', 'Abertura de conta', 'Empresa Exemplo', '12.345.678/0001-90',
+      'Nome do Analista', 'login.analista', format(new Date(), 'yyyy-MM-dd'), 'Não', '',
+      '', 'Observação opcional'
+    ];
+
+    const csvContent = [
+      headers.join(';'),
+      example.join(';')
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'modelo_importacao_monitorias.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    const toastId = toast.loading('Processando arquivo...');
+
+    Papa.parse(file, {
+      header: true,
+      delimiter: ';',
+      skipEmptyLines: true,
+      encoding: 'UTF-8',
+      complete: async (results) => {
+        try {
+          const data = results.data as any[];
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const row of data) {
+            try {
+              // Basic validation
+              if (!row['Esteira'] || !row['Demanda'] || !row['Analista'] || !row['Data']) {
+                errorCount++;
+                continue;
+              }
+
+              // Find analyst by name or matricula
+              const analystName = row['Analista']?.trim();
+              const analystMatricula = row['Matrícula']?.trim();
+              
+              const analyst = analysts.find(a => 
+                normalizeString(a.name) === normalizeString(analystName) || 
+                (analystMatricula && normalizeString(a.matricula) === normalizeString(analystMatricula))
+              );
+
+              if (!analyst) {
+                console.warn(`Analista não encontrado: ${analystName}`);
+                errorCount++;
+                continue;
+              }
+
+              // Prepare analysis data
+              const analysisData = {
+                track: row['Esteira'],
+                demand_number: row['Demanda'],
+                demand_type: row['Tipo de Demanda'] || 'Outro',
+                company_name: row['Empresa'] || '',
+                cnpj: row['CNPJ'] || '',
+                analyst_id: analyst.id.toString(),
+                treatment_date: row['Data'],
+                status: row['Erro'] === 'Sim' ? 'Sim' : 'Não',
+                status_observation: row['Observação do Erro'] || '',
+                tag: row['Tag'] || '',
+                observation: row['Observação da Monitoria'] || '',
+                monitor_name: currentUser.name
+              };
+
+              await api.createAnalysis(analysisData);
+              successCount++;
+            } catch (err) {
+              console.error('Erro ao importar linha:', err);
+              errorCount++;
+            }
+          }
+
+          toast.dismiss(toastId);
+          if (successCount > 0) {
+            toast.success(`${successCount} monitorias importadas com sucesso!`);
+            if (errorCount > 0) {
+              toast.error(`${errorCount} linhas falharam na importação.`);
+            }
+            setShowImportModal(false);
+            loadData();
+          } else {
+            toast.error('Nenhuma monitoria foi importada. Verifique o formato do arquivo.');
+          }
+        } catch (err) {
+          toast.dismiss(toastId);
+          toast.error('Erro ao processar arquivo CSV');
+        } finally {
+          setImporting(false);
+          // Reset input
+          event.target.value = '';
+        }
+      },
+      error: (err) => {
+        toast.dismiss(toastId);
+        toast.error('Erro ao ler arquivo CSV');
+        setImporting(false);
+      }
+    });
   };
 
   const filteredAnalyses = Array.isArray(analyses) ? analyses.filter(a => {
@@ -830,6 +956,13 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     Limpar Histórico
                   </button>
                   <button 
+                    onClick={() => setShowImportModal(true)}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 text-sm font-bold"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Importar
+                  </button>
+                  <button 
                     onClick={handleExport}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 text-sm font-bold"
                   >
@@ -1145,6 +1278,83 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   >
                     {clearing ? 'Apagando...' : 'Confirmar'}
                   </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showImportModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md border border-slate-100 dark:border-slate-800 overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-emerald-500" />
+                  Importar Monitorias
+                </h2>
+                <button 
+                  onClick={() => setShowImportModal(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-500/20">
+                  <h3 className="text-sm font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2">
+                    <Info className="w-4 h-4" />
+                    Instruções para Importação
+                  </h3>
+                  <ul className="text-xs text-blue-600 dark:text-blue-300 space-y-1 list-disc pl-4">
+                    <li>Utilize o arquivo CSV modelo para garantir o formato correto.</li>
+                    <li><strong>Atenção:</strong> O nome do analista deve estar exatamente como cadastrado no sistema.</li>
+                    <li><strong>Atenção:</strong> Não deixe nenhuma coluna obrigatória vazia (Esteira, Demanda, Analista, Data).</li>
+                    <li>O delimitador do CSV deve ser ponto e vírgula (;).</li>
+                  </ul>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={downloadTemplate}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all font-bold text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    Baixar Modelo CSV
+                  </button>
+                  
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleImportCSV}
+                      disabled={importing}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label
+                      htmlFor="csv-upload"
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all font-bold cursor-pointer shadow-lg shadow-emerald-500/20 ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {importing ? (
+                        <>
+                          <RefreshCw className="w-5 h-5 animate-spin" />
+                          Processando...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-5 h-5" />
+                          Selecionar Arquivo CSV
+                        </>
+                      )}
+                    </label>
+                  </div>
                 </div>
               </div>
             </motion.div>
