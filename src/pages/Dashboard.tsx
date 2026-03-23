@@ -117,16 +117,27 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
     fetchInitialData();
   }, [individualMode]);
 
+  const toISODate = (dateStr: any) => {
+    if (!dateStr) return '';
+    const s = String(dateStr).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+    const dmyDash = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+    if (dmyDash) return `${dmyDash[3]}-${dmyDash[2].padStart(2, '0')}-${dmyDash[1].padStart(2, '0')}`;
+    return s;
+  };
+
   useEffect(() => {
     if (!rawAnalyses) return;
 
     let filtered = [...rawAnalyses];
 
     if (filters.start_date) {
-      filtered = filtered.filter(a => a.treatment_date >= filters.start_date);
+      filtered = filtered.filter(a => toISODate(a.treatment_date) >= filters.start_date);
     }
     if (filters.end_date) {
-      filtered = filtered.filter(a => a.treatment_date <= filters.end_date);
+      filtered = filtered.filter(a => toISODate(a.treatment_date) <= filters.end_date);
     }
     if (filters.track) {
       filtered = filtered.filter(a => a.track === filters.track);
@@ -210,8 +221,9 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
       const dayStr = `${String(currentDay.getDate()).padStart(2, '0')}/${String(currentDay.getMonth() + 1).padStart(2, '0')}`;
       
       const dayAnalyses = filtered.filter(a => {
-        if (!a.treatment_date) return false;
-        const parts = String(a.treatment_date).split('-');
+        const isoDate = toISODate(a.treatment_date);
+        if (!isoDate) return false;
+        const parts = isoDate.split('-');
         if (parts.length !== 3) return false;
         const [y, m, d] = parts.map(Number);
         return d === currentDay.getDate() && (m - 1) === currentDay.getMonth() && y === currentDay.getFullYear();

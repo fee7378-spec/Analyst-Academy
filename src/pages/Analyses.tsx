@@ -249,6 +249,47 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     }
   };
 
+  const formatCNPJ = (value: string) => {
+    let clean = value.replace(/\D/g, '');
+    if (clean.length > 14) clean = clean.slice(0, 14);
+    
+    let masked = clean;
+    if (clean.length > 2) masked = clean.slice(0, 2) + '.' + clean.slice(2);
+    if (clean.length > 5) masked = masked.slice(0, 6) + '.' + masked.slice(6);
+    if (clean.length > 8) masked = masked.slice(0, 10) + '/' + masked.slice(10);
+    if (clean.length > 12) masked = masked.slice(0, 15) + '-' + masked.slice(15);
+    
+    return masked;
+  };
+
+  const parseCSVDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    
+    // Handle DD/MM/YYYY
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const [day, month, year] = parts;
+        // Ensure year is 4 digits
+        const fullYear = year.length === 2 ? `20${year}` : year;
+        return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+    }
+    
+    // Handle YYYY-MM-DD (already correct)
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const [year, month, day] = parts;
+        if (year.length === 4) return dateStr;
+        // Handle DD-MM-YYYY
+        return `${day}-${month.padStart(2, '0')}-${year.padStart(2, '0')}`;
+      }
+    }
+    
+    return dateStr;
+  };
+
   const validateCNPJ = (cnpj: string) => {
     const clean = cnpj.replace(/\D/g, '');
     if (clean.length !== 14) return false;
@@ -257,16 +298,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   };
 
   const handleCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 14) value = value.slice(0, 14);
-    
-    // Apply mask: 00.000.000/0000-00
-    let masked = value;
-    if (value.length > 2) masked = value.slice(0, 2) + '.' + value.slice(2);
-    if (value.length > 5) masked = masked.slice(0, 6) + '.' + masked.slice(6);
-    if (value.length > 8) masked = masked.slice(0, 10) + '/' + masked.slice(10);
-    if (value.length > 12) masked = masked.slice(0, 15) + '-' + masked.slice(15);
-    
+    const masked = formatCNPJ(e.target.value);
     setFormData({...formData, cnpj: masked});
   };
 
@@ -340,8 +372,8 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     
     // Example row
     const example = [
-      'Extranet', '123456', 'Abertura de conta', 'Empresa Exemplo', '12.345.678/0001-90',
-      'Nome do Analista', 'login.analista', format(new Date(), 'yyyy-MM-dd'), 'Não', '',
+      'Extranet', '123456', 'Abertura de conta', 'Empresa Exemplo', '12345678000190',
+      'Nome do Analista', 'login.analista', format(new Date(), 'dd/MM/yyyy'), 'Não', '',
       '', 'Observação opcional'
     ];
 
@@ -407,9 +439,9 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 demand_number: row['Demanda'],
                 demand_type: row['Tipo de Demanda'] || 'Outro',
                 company_name: row['Empresa'] || '',
-                cnpj: row['CNPJ'] || '',
+                cnpj: formatCNPJ(row['CNPJ'] || ''),
                 analyst_id: analyst.id.toString(),
-                treatment_date: row['Data'],
+                treatment_date: parseCSVDate(row['Data']),
                 status: row['Erro'] === 'Sim' ? 'Sim' : 'Não',
                 status_observation: row['Observação do Erro'] || '',
                 tag: row['Tag'] || '',
