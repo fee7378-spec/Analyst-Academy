@@ -596,7 +596,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                             axisLine={false} 
                             tickLine={false} 
                             interval={0}
-                            height={40}
+                            height={30}
                             tick={(props) => {
                               const { x, y, payload } = props;
                               if (!payload.value) return null;
@@ -605,7 +605,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                                   <text
                                     x={0}
                                     y={0}
-                                    dy={20}
+                                    dy={12}
                                     textAnchor="middle"
                                     fill="#64748b"
                                     fontSize={12}
@@ -651,7 +651,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                             axisLine={false} 
                             tickLine={false} 
                             interval={0}
-                            height={40}
+                            height={30}
                             tick={(props) => {
                               const { x, y, payload } = props;
                               if (!payload.value) return null;
@@ -660,7 +660,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                                   <text
                                     x={0}
                                     y={0}
-                                    dy={20}
+                                    dy={12}
                                     textAnchor="middle"
                                     fill="#64748b"
                                     fontSize={12}

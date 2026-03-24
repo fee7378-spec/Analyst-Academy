@@ -770,7 +770,7 @@ export const Analysts: React.FC = () => {
                                   axisLine={false} 
                                   tickLine={false} 
                                   interval={0}
-                                  height={40}
+                                  height={30}
                                   tick={(props) => {
                                     const { x, y, payload } = props;
                                     if (!payload.value) return null;
@@ -779,7 +779,7 @@ export const Analysts: React.FC = () => {
                                         <text
                                           x={0}
                                           y={0}
-                                          dy={20}
+                                          dy={12}
                                           textAnchor="middle"
                                           fill="#64748b"
                                           fontSize={12}
@@ -825,7 +825,7 @@ export const Analysts: React.FC = () => {
                                   axisLine={false} 
                                   tickLine={false} 
                                   interval={0}
-                                  height={40}
+                                  height={30}
                                   tick={(props) => {
                                     const { x, y, payload } = props;
                                     if (!payload.value) return null;
@@ -834,7 +834,7 @@ export const Analysts: React.FC = () => {
                                         <text
                                           x={0}
                                           y={0}
-                                          dy={20}
+                                          dy={12}
                                           textAnchor="middle"
                                           fill="#64748b"
                                           fontSize={12}
