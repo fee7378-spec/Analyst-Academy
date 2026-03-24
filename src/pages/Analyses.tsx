@@ -114,7 +114,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     demand_number: '',
     demand_type: DEMAND_TYPES[0],
     track: '',
-    observation: '',
     status: 'Não' as AnalysisStatus,
     status_observation: '',
     tag: '',
@@ -202,7 +201,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
       demand_number: '',
       demand_type: DEMAND_TYPES[0],
       track: '',
-      observation: '',
       status: 'Não',
       status_observation: '',
       tag: '',
@@ -228,7 +226,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
       demand_number: analysis.demand_number,
       demand_type: isOther ? 'Outro' : analysis.demand_type,
       track: analysis.track,
-      observation: analysis.observation,
       status: analysis.status,
       status_observation: analysis.status_observation,
       tag: analysis.tag || '',
@@ -321,8 +318,8 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
 
       const headers = [
         'Esteira', 'Demanda', 'Tipo de Demanda', 'Empresa', 'CNPJ', 
-        'Analista', 'Matrícula', 'Data', 'Erro', 'Observação do Erro', 
-        'Tag', 'Observação da Monitoria', 'Monitor'
+        'Analista', 'Login do Analista', 'Data', 'Erro', 'Observação do Erro', 
+        'Tag', 'Monitor'
       ];
       
       const csvContent = [
@@ -339,7 +336,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
           analysis.status,
           `"${(analysis.status_observation || '').replace(/"/g, '""')}"`,
           analysis.tag || '',
-          `"${(analysis.observation || '').replace(/"/g, '""')}"`,
           `"${(analysis.monitor_name || '').replace(/"/g, '""')}"`
         ].join(';'))
       ].join('\n');
@@ -376,15 +372,15 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const downloadTemplate = () => {
     const headers = [
       'Esteira', 'Demanda', 'Tipo de Demanda', 'Empresa', 'CNPJ', 
-      'Analista', 'Matrícula', 'Data', 'Erro', 'Observação do Erro', 
-      'Tag', 'Observação da Monitoria'
+      'Analista', 'Login do Analista', 'Data', 'Erro', 'Observação do Erro', 
+      'Tag'
     ];
     
     // Example row
     const example = [
       'Extranet', '123456', 'Abertura de conta', 'Empresa Exemplo', '12.345.678/0001-90',
       'Nome do Analista', 'login.analista', format(new Date(), 'dd/MM/yyyy'), 'Não', '',
-      '', 'Observação opcional'
+      ''
     ];
 
     const csvContent = [
@@ -402,10 +398,27 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     document.body.removeChild(link);
   };
 
-  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleDropCSV = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
+    if (!canEditNovaMonitoria) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
+
+    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+      toast.error('Por favor, selecione um arquivo CSV válido.');
+      return;
+    }
+
+    processCSV(file);
+  };
+
+  const processCSV = async (file: File) => {
     setImporting(true);
     const toastId = toast.loading('Processando arquivo...');
 
@@ -428,13 +441,13 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 continue;
               }
 
-              // Find analyst by name or matricula
+              // Find analyst by name or login
               const analystName = row['Analista']?.trim();
-              const analystMatricula = row['Matrícula']?.trim();
+              const analystLogin = row['Login do Analista']?.trim();
               
               const analyst = analysts.find(a => 
                 normalizeString(a.name) === normalizeString(analystName) || 
-                (analystMatricula && normalizeString(a.matricula) === normalizeString(analystMatricula))
+                (analystLogin && normalizeString(a.matricula) === normalizeString(analystLogin))
               );
 
               if (!analyst) {
@@ -455,7 +468,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 status: row['Erro'] === 'Sim' ? 'Sim' : 'Não',
                 status_observation: row['Observação do Erro'] || '',
                 tag: row['Tag'] || '',
-                observation: row['Observação da Monitoria'] || '',
                 monitor_name: currentUser.name
               };
 
@@ -483,8 +495,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
           toast.error('Erro ao processar arquivo CSV');
         } finally {
           setImporting(false);
-          // Reset input
-          event.target.value = '';
         }
       },
       error: (err) => {
@@ -493,6 +503,20 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
         setImporting(false);
       }
     });
+  };
+
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!canEditNovaMonitoria) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
+
+    processCSV(file);
+    // Reset input
+    event.target.value = '';
   };
 
   const filteredAnalyses = Array.isArray(analyses) ? analyses.filter(a => {
@@ -535,7 +559,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     showDate: true,
     showDemandNumber: true,
     showDemandType: true,
-    showObservation: true,
     showStatus: true,
     showStatusObservation: true,
     showTag: true,
@@ -836,19 +859,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   </div>
                 )}
 
-                {currentTrackConfig.showObservation && (
-                  <div className="space-y-3">
-                    <label className="text-base font-bold text-slate-800 dark:text-slate-200">Observação da Monitoria</label>
-                    <textarea 
-                      value={formData.observation}
-                      onChange={e => setFormData({...formData, observation: e.target.value})}
-                      rows={1}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all min-h-[48px] resize-y dark:text-white"
-                      placeholder="Detalhes da análise realizada..."
-                    />
-                  </div>
-                )}
-
                 {currentTrackConfig.showStatus && (
                   <div className="space-y-3">
                     <label className="text-base font-bold text-slate-800 dark:text-slate-200">Erro</label>
@@ -857,7 +867,12 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       value={formData.status}
                       onChange={e => {
                         const newStatus = e.target.value as AnalysisStatus;
-                        setFormData({...formData, status: newStatus, tag: newStatus === 'Não' ? '' : formData.tag});
+                        setFormData({
+                          ...formData, 
+                          status: newStatus, 
+                          tag: newStatus === 'Não' ? '' : formData.tag,
+                          status_observation: newStatus === 'Não' ? '' : formData.status_observation
+                        });
                       }}
                       className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
                     >
@@ -888,8 +903,12 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   </motion.div>
                 )}
 
-                {currentTrackConfig.showStatusObservation && (
-                  <div className="space-y-3">
+                {currentTrackConfig.showStatus && formData.status === 'Sim' && currentTrackConfig.showStatusObservation && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-3"
+                  >
                     <label className="text-base font-bold text-slate-800 dark:text-slate-200">Erro Encontrado</label>
                     <textarea 
                       value={formData.status_observation}
@@ -898,7 +917,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all min-h-[48px] resize-y dark:text-white"
                       placeholder="Descreva o erro encontrado"
                     />
-                  </div>
+                  </motion.div>
                 )}
 
               <div className="flex justify-end gap-5 pt-6 border-t border-slate-100 dark:border-slate-800 mt-4">
@@ -1000,18 +1019,18 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     </button>
                   )}
                   <button 
-                    onClick={() => setShowImportModal(true)}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 text-sm font-bold"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Importar
-                  </button>
-                  <button 
                     onClick={handleExport}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 text-sm font-bold"
                   >
                     <Download className="w-4 h-4" />
                     Exportar
+                  </button>
+                  <button 
+                    onClick={() => setShowImportModal(true)}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 text-sm font-bold"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Importar
                   </button>
                 </div>
               )}
@@ -1173,7 +1192,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                         {viewingAnalysis.analyst_name || analysts.find(a => a.id.toString() === viewingAnalysis.analyst_id?.toString())?.name || 'N/A'}
                       </span>
                       <span className="text-xs text-slate-500 dark:text-slate-400 block">
-                        Matrícula: {viewingAnalysis.analyst_matricula || analysts.find(a => a.id.toString() === viewingAnalysis.analyst_id?.toString())?.matricula || 'N/A'}
+                        Login: {viewingAnalysis.analyst_matricula || analysts.find(a => a.id.toString() === viewingAnalysis.analyst_id?.toString())?.matricula || 'N/A'}
                       </span>
                     </div>
                     
@@ -1206,15 +1225,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 </div>
 
                 <div className="space-y-4 pt-4">
-                  <h3 className="font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Observações</h3>
-                  
-                  <div>
-                    <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block mb-1">Observação Geral</span>
-                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
-                      {viewingAnalysis.observation || 'Nenhuma observação registrada.'}
-                    </div>
-                  </div>
-
                   {viewingAnalysis.status === 'Sim' && (
                     <div>
                       <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block mb-1">Detalhes do Erro Encontrado</span>
@@ -1384,17 +1394,19 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     />
                     <label
                       htmlFor="csv-upload"
-                      className={`w-full flex items-center justify-center gap-2 px-4 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all font-bold cursor-pointer shadow-lg shadow-emerald-500/20 ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleDropCSV}
+                      className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-8 bg-emerald-50 dark:bg-emerald-500/5 border-2 border-dashed border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl transition-all font-bold cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {importing ? (
                         <>
-                          <RefreshCw className="w-5 h-5 animate-spin" />
-                          Processando...
+                          <RefreshCw className="w-8 h-8 animate-spin mb-2" />
+                          <span className="text-sm">Processando...</span>
                         </>
                       ) : (
                         <>
-                          <Upload className="w-5 h-5" />
-                          Selecionar Arquivo CSV
+                          <Upload className="w-8 h-8 mb-2" />
+                          <span className="text-sm text-center">Clique ou arraste o arquivo CSV para importar</span>
                         </>
                       )}
                     </label>

@@ -56,8 +56,11 @@ export const DataProcessing: React.FC = () => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'pj' | 'pf') => {
-    const file = e.target.files?.[0];
+  const handleDrop = (e: React.DragEvent, type: 'pj' | 'pf') => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
     if (!canEdit) {
@@ -65,6 +68,13 @@ export const DataProcessing: React.FC = () => {
       return;
     }
 
+    // Create a mock event to reuse handleFileUpload logic if possible, 
+    // but handleFileUpload expects React.ChangeEvent<HTMLInputElement>.
+    // Better to refactor the logic into a separate function.
+    processFile(file, type);
+  };
+
+  const processFile = async (file: File, type: 'pj' | 'pf') => {
     setLoading(true);
     try {
       const data = await file.arrayBuffer();
@@ -72,8 +82,6 @@ export const DataProcessing: React.FC = () => {
       
       const sheets: SheetData[] = workbook.SheetNames.map(name => {
         const worksheet = workbook.Sheets[name];
-        // Use header: "A" to get keys as column letters (A, B, C...)
-        // raw: false ensures we get the formatted string as seen in Excel
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: "A", raw: false });
         return {
           name,
@@ -96,6 +104,18 @@ export const DataProcessing: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'pj' | 'pf') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!canEdit) {
+      toast.error('Você não tem permissão para realizar esta ação');
+      return;
+    }
+
+    processFile(file, type);
   };
 
   const handleDeleteConsolidated = async () => {
@@ -420,10 +440,14 @@ export const DataProcessing: React.FC = () => {
               </div>
 
               {!files.pj ? (
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                <label 
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, 'pj')}
+                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
+                >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Upload className="w-8 h-8 text-slate-400 mb-3" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Clique para selecionar o arquivo PJ</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Clique ou arraste para selecionar o arquivo PJ</p>
                   </div>
                   <input type="file" className="hidden" accept=".xlsx, .xls" onChange={e => handleFileUpload(e, 'pj')} />
                 </label>
@@ -473,10 +497,14 @@ export const DataProcessing: React.FC = () => {
               </div>
 
               {!files.pf ? (
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                <label 
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, 'pf')}
+                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
+                >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Upload className="w-8 h-8 text-slate-400 mb-3" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Clique para selecionar o arquivo PF</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Clique ou arraste para selecionar o arquivo PF</p>
                   </div>
                   <input type="file" className="hidden" accept=".xlsx, .xls" onChange={e => handleFileUpload(e, 'pf')} />
                 </label>

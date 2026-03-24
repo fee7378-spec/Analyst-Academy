@@ -58,7 +58,6 @@ export interface Analysis {
   demand_number: string;
   demand_type: string;
   track: string;
-  observation: string;
   status: AnalysisStatus;
   status_observation: string;
   tag?: string;
@@ -88,5 +87,4 @@ export interface DashboardData {
   evolution: { week: string; count: number; errors: number }[];
   errorsByType: { demand_type: string; count: number }[];
   errorsByTag: { tag: string; count: number }[];
-  errorsByObservation: { observation: string; count: number }[];
 }
