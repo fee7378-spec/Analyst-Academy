@@ -9,7 +9,7 @@ import {
   RefreshCw,
   Trash2
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -26,6 +26,7 @@ export const Logs: React.FC = () => {
   const [showClearModal, setShowClearModal] = useState(false);
   const [clearPeriod, setClearPeriod] = useState('7');
   const [clearing, setClearing] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
@@ -102,6 +103,13 @@ export const Logs: React.FC = () => {
                         (dateFilter.end ? logDate <= dateFilter.end : true);
     return matchesSearch && matchesAction && matchesDate;
   }) : [];
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [searchTerm, actionFilter, dateFilter]);
+
+  const displayedLogs = filteredLogs.slice(0, visibleCount);
 
   const getActionColor = (action: string) => {
     switch (action) {
@@ -204,7 +212,7 @@ export const Logs: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-              {filteredLogs.length > 0 ? filteredLogs.map((log) => (
+              {displayedLogs.length > 0 ? displayedLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
@@ -245,6 +253,18 @@ export const Logs: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {visibleCount < filteredLogs.length && (
+          <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-center">
+            <button
+              onClick={() => setVisibleCount(prev => prev + 20)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition-all rounded-xl font-bold text-sm"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Carregar mais 20 logs
+            </button>
+          </div>
+        )}
       </div>
       {/* Modal Limpar Logs */}
       <AnimatePresence>
