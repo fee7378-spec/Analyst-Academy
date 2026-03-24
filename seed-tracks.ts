@@ -17,7 +17,7 @@ const db = getDatabase(app);
 
 const tracksToCreate = [
   { name: 'Extranet', icon: 'Globe' },
-  { name: 'Abertura', icon: 'FilePlus' },
+  { name: 'Abertura PJ', icon: 'FilePlus' },
   { name: 'PME', icon: 'Hammer' },
   { name: 'BKO', icon: 'Briefcase' },
   { name: 'Abono', icon: 'Wallet' },

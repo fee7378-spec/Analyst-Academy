@@ -100,6 +100,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
   const canEditHistorico = currentUser.role === 'Administrador' || permissions['historico'] === 'edit';
+  const canClearHistorico = currentUser.role === 'Administrador';
   const canViewHistorico = currentUser.role === 'Administrador' || permissions['historico'] !== 'none';
   const canEditNovaMonitoria = currentUser.role === 'Administrador' || permissions['nova-monitoria'] === 'edit';
   const canViewAnalysts = currentUser.role === 'Administrador' || permissions['analistas'] !== 'none';
@@ -543,10 +544,10 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   };
 
   let currentDemandTypes = currentTrackConfig.demandTypes?.length > 0 ? currentTrackConfig.demandTypes : DEMAND_TYPES;
-  if (selectedTrack === 'Abertura' || selectedTrack === 'BKO Abertura') {
+  if (selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura') {
     currentDemandTypes = ['Abertura de conta'];
   } else {
-    currentDemandTypes = currentDemandTypes.filter(type => type !== 'Abertura de conta' && type !== 'Abertura');
+    currentDemandTypes = currentDemandTypes.filter(type => type !== 'Abertura de conta');
   }
   const currentTags = currentTrackConfig.tags?.length > 0 ? currentTrackConfig.tags : TAGS;
 
@@ -598,7 +599,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   onClick={() => {
                     setSelectedTrack(track.name);
                     let demandType = formData.demand_type;
-                    if (track.name === 'Abertura' || track.name === 'BKO Abertura') {
+                    if (track.name === 'Abertura PJ' || track.name === 'BKO Abertura') {
                       demandType = 'Abertura de conta';
                     }
                     setFormData({ ...formData, track: track.name, demand_type: demandType });
@@ -793,11 +794,11 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 {currentTrackConfig.showDemandType && (
                   <div className="space-y-3">
                     <label className="text-base font-bold text-slate-800 dark:text-slate-200">
-                      Tipo de Demanda {(selectedTrack === 'Abertura' || selectedTrack === 'BKO Abertura') && <span className="text-xs font-normal text-blue-500 ml-2">(Fixo para esta esteira)</span>}
+                      Tipo de Demanda {(selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura') && <span className="text-xs font-normal text-blue-500 ml-2">(Fixo para esta esteira)</span>}
                     </label>
                     <select 
                       required
-                      disabled={selectedTrack === 'Abertura' || selectedTrack === 'BKO Abertura'}
+                      disabled={selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura'}
                       value={formData.demand_type}
                       onChange={e => {
                         const val = e.target.value;
@@ -805,13 +806,13 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                         setIsOtherDemandType(val === 'Outro');
                       }}
                       className={`w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white ${
-                        (selectedTrack === 'Abertura' || selectedTrack === 'BKO Abertura') ? 'opacity-75 cursor-not-allowed' : ''
+                        (selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura') ? 'opacity-75 cursor-not-allowed' : ''
                       }`}
                     >
                       {currentDemandTypes.map(type => (
                         <option key={type} value={type} className="dark:bg-slate-900">{type}</option>
                       ))}
-                      {selectedTrack !== 'Abertura' && selectedTrack !== 'BKO Abertura' && (
+                      {selectedTrack !== 'Abertura PJ' && selectedTrack !== 'BKO Abertura' && (
                         <option value="Outro" className="dark:bg-slate-900">Outro</option>
                       )}
                     </select>
@@ -989,7 +990,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               </div>
               {canViewHistorico && (
                 <div className="flex gap-2">
-                  {canEditHistorico && (
+                  {canClearHistorico && (
                     <button 
                       onClick={() => setShowClearModal(true)}
                       className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-red-500/20 text-sm font-bold"

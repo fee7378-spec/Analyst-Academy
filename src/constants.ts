@@ -118,7 +118,7 @@ export const getIconDataById = (id: string, name?: string) => {
       'SH PME': { icon: Store, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30' },
       'Premium PJ': { icon: Star, color: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30' },
       'WM': { icon: TrendingUp, color: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30' },
-      'Abertura': { icon: FilePlus, color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' },
+      'Abertura PJ': { icon: FilePlus, color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' },
       'Corporate': { icon: Building, color: 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30' },
       'Extranet': { icon: Globe, color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' },
       'Parametrização': { icon: Settings, color: 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30' },
