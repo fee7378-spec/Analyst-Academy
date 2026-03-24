@@ -30,6 +30,7 @@ interface FileData {
 export const DataProcessing: React.FC = () => {
   const [files, setFiles] = useState<{ pj: FileData | null; pf: FileData | null }>({ pj: null, pf: null });
   const [loading, setLoading] = useState(false);
+  const [lastProcessingDate, setLastProcessingDate] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [columns, setColumns] = useState({
@@ -41,6 +42,19 @@ export const DataProcessing: React.FC = () => {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
   const canEdit = currentUser.role === 'Administrador' || permissions['processamento'] === 'edit';
+
+  React.useEffect(() => {
+    loadLastProcessingDate();
+  }, []);
+
+  const loadLastProcessingDate = async () => {
+    try {
+      const date = await api.getLastProcessingDate();
+      setLastProcessingDate(date);
+    } catch (error) {
+      console.error('Erro ao carregar data do último processamento:', error);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'pj' | 'pf') => {
     const file = e.target.files?.[0];
@@ -217,6 +231,7 @@ export const DataProcessing: React.FC = () => {
       });
       
       await api.updateAnalystsProductivity(productivityMap);
+      await loadLastProcessingDate();
       
       toast.success(`${consolidated.length} registros consolidados com sucesso!`);
     } catch (error) {
@@ -231,9 +246,30 @@ export const DataProcessing: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Processamento de Bases</h1>
-        <p className="text-slate-500 dark:text-slate-400">Carregue e consolide as bases de tabulação PJ e PF</p>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Processamento de Bases</h1>
+          <p className="text-slate-500 dark:text-slate-400">Carregue e consolide as bases de tabulação PJ e PF</p>
+        </div>
+        {lastProcessingDate && (
+          <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
+              <RefreshCw className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider font-bold text-blue-500 dark:text-blue-400">Último Processamento</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                {new Date(lastProcessingDate).toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

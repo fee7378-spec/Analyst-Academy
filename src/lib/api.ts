@@ -1075,9 +1075,17 @@ export const api = {
   },
 
   async saveConsolidatedData(data: any[]) {
+    const now = new Date().toISOString();
     await set(ref(db, 'consolidated_data'), data);
+    await set(ref(db, 'metadata/last_processing_date'), now);
     await logAction('Consolidar Base', `${data.length} registros consolidados`);
     return { success: true };
+  },
+
+  async getLastProcessingDate() {
+    const snapshot = await get(ref(db, 'metadata/last_processing_date'));
+    if (!snapshot.exists()) return null;
+    return snapshot.val() as string;
   },
 
   async getConsolidatedData() {
