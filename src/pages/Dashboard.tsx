@@ -578,30 +578,58 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               {/* Erro por Tipo de Demanda */}
               <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-red-500" />
                   Erro por Tipo de Demanda
                 </h3>
-                <div className="h-52">
+                <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
                   {(data?.errorsByType?.length || 0) > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.errorsByType}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
-                        <XAxis dataKey="demand_type" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
-                        <Tooltip 
-                          cursor={false}
-                          contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                          formatter={(value: any) => [value, 'Quant']}
-                        />
-                        <Bar dataKey="count" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                          <LabelList dataKey="count" position="top" fill="#64748b" fontSize={10} fontWeight="bold" />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <div className="h-full" style={{ minWidth: Math.max(800, (data?.errorsByType?.length || 0) * 180) }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data.errorsByType} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
+                          <XAxis 
+                            dataKey="demand_type" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            interval={0}
+                            height={40}
+                            tick={(props) => {
+                              const { x, y, payload } = props;
+                              if (!payload.value) return null;
+                              return (
+                                <g transform={`translate(${x},${y})`}>
+                                  <text
+                                    x={0}
+                                    y={0}
+                                    dy={20}
+                                    textAnchor="middle"
+                                    fill="#64748b"
+                                    fontSize={12}
+                                    fontWeight="bold"
+                                    className="dark:fill-slate-400"
+                                  >
+                                    {payload.value}
+                                  </text>
+                                </g>
+                              );
+                            }}
+                          />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
+                          <Tooltip 
+                            cursor={false}
+                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                            formatter={(value: any) => [value, 'Quant']}
+                          />
+                          <Bar dataKey="count" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                            <LabelList dataKey="count" position="top" fill="#64748b" fontSize={12} fontWeight="bold" />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   ) : <EmptyState />}
                 </div>
               </div>
@@ -612,23 +640,51 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                   <Award className="w-5 h-5 text-blue-500" />
                   Tags de Erro
                 </h3>
-                <div className="h-52">
+                <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
                   {(data?.errorsByTag?.length || 0) > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.errorsByTag}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
-                        <XAxis dataKey="tag" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
-                        <Tooltip 
-                          cursor={false}
-                          contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                          formatter={(value: any) => [value, 'Quant']}
-                        />
-                        <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                          <LabelList dataKey="count" position="top" fill="#64748b" fontSize={10} fontWeight="bold" />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <div className="h-full" style={{ minWidth: Math.max(800, (data?.errorsByTag?.length || 0) * 180) }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data.errorsByTag} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
+                          <XAxis 
+                            dataKey="tag" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            interval={0}
+                            height={40}
+                            tick={(props) => {
+                              const { x, y, payload } = props;
+                              if (!payload.value) return null;
+                              return (
+                                <g transform={`translate(${x},${y})`}>
+                                  <text
+                                    x={0}
+                                    y={0}
+                                    dy={20}
+                                    textAnchor="middle"
+                                    fill="#64748b"
+                                    fontSize={12}
+                                    fontWeight="bold"
+                                    className="dark:fill-slate-400"
+                                  >
+                                    {payload.value}
+                                  </text>
+                                </g>
+                              );
+                            }}
+                          />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
+                          <Tooltip 
+                            cursor={false}
+                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                            formatter={(value: any) => [value, 'Quant']}
+                          />
+                          <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                            <LabelList dataKey="count" position="top" fill="#64748b" fontSize={12} fontWeight="bold" />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   ) : <EmptyState />}
                 </div>
               </div>

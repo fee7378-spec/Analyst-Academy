@@ -32,6 +32,7 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
+  LabelList,
   Cell,
   PieChart as RePieChart,
   Pie,
@@ -615,7 +616,7 @@ export const Analysts: React.FC = () => {
                       <TrendingUp className="w-5 h-5 text-blue-500" />
                       Monitorias vs Erros
                     </h3>
-                    <div className="h-[255px] w-full">
+                    <div className="h-64 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={getAnalystEvolution(selectedAnalyst, 'monitoria')} margin={{ top: 20, right: 5, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
@@ -690,7 +691,7 @@ export const Analysts: React.FC = () => {
                       <TrendingUp className="w-5 h-5 text-blue-500" />
                       Produtividade Diária
                     </h3>
-                    <div className="h-[255px] w-full">
+                    <div className="h-64 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={getAnalystEvolution(selectedAnalyst, 'produtividade')} margin={{ top: 20, right: 5, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
@@ -751,23 +752,59 @@ export const Analysts: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 px-1">
+                  <div className="grid grid-cols-1 gap-8 pb-6 px-1">
                     {/* Erro por Tipo de Demanda */}
                     <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-red-500" />
                         Erro por Tipo de Demanda
                       </h3>
-                      <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <ReBarChart data={getAnalystErrorStats(selectedAnalyst).errorsByType}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
-                            <XAxis dataKey="demand_type" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
-                            <Tooltip cursor={false} contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} />
-                            <Bar dataKey="count" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                          </ReBarChart>
-                        </ResponsiveContainer>
+                      <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                        {getAnalystErrorStats(selectedAnalyst).errorsByType.length > 0 ? (
+                          <div className="h-full" style={{ minWidth: Math.max(800, getAnalystErrorStats(selectedAnalyst).errorsByType.length * 180) }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <ReBarChart data={getAnalystErrorStats(selectedAnalyst).errorsByType} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
+                                <XAxis 
+                                  dataKey="demand_type" 
+                                  axisLine={false} 
+                                  tickLine={false} 
+                                  interval={0}
+                                  height={40}
+                                  tick={(props) => {
+                                    const { x, y, payload } = props;
+                                    if (!payload.value) return null;
+                                    return (
+                                      <g transform={`translate(${x},${y})`}>
+                                        <text
+                                          x={0}
+                                          y={0}
+                                          dy={20}
+                                          textAnchor="middle"
+                                          fill="#64748b"
+                                          fontSize={12}
+                                          fontWeight="bold"
+                                          className="dark:fill-slate-400"
+                                        >
+                                          {payload.value}
+                                        </text>
+                                      </g>
+                                    );
+                                  }}
+                                />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
+                                <Tooltip cursor={false} contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} />
+                                <Bar dataKey="count" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                                  <LabelList dataKey="count" position="top" fill="#64748b" fontSize={12} fontWeight="bold" />
+                                </Bar>
+                              </ReBarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-slate-400 text-sm italic">
+                            Nenhum erro registrado
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -777,16 +814,52 @@ export const Analysts: React.FC = () => {
                         <Award className="w-5 h-5 text-blue-500" />
                         Ranking de Tags de Erro
                       </h3>
-                      <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <ReBarChart data={getAnalystErrorStats(selectedAnalyst).errorsByTag}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
-                            <XAxis dataKey="tag" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
-                            <Tooltip cursor={false} contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} />
-                            <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
-                          </ReBarChart>
-                        </ResponsiveContainer>
+                      <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                        {getAnalystErrorStats(selectedAnalyst).errorsByTag.length > 0 ? (
+                          <div className="h-full" style={{ minWidth: Math.max(800, getAnalystErrorStats(selectedAnalyst).errorsByTag.length * 180) }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <ReBarChart data={getAnalystErrorStats(selectedAnalyst).errorsByTag} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
+                                <XAxis 
+                                  dataKey="tag" 
+                                  axisLine={false} 
+                                  tickLine={false} 
+                                  interval={0}
+                                  height={40}
+                                  tick={(props) => {
+                                    const { x, y, payload } = props;
+                                    if (!payload.value) return null;
+                                    return (
+                                      <g transform={`translate(${x},${y})`}>
+                                        <text
+                                          x={0}
+                                          y={0}
+                                          dy={20}
+                                          textAnchor="middle"
+                                          fill="#64748b"
+                                          fontSize={12}
+                                          fontWeight="bold"
+                                          className="dark:fill-slate-400"
+                                        >
+                                          {payload.value}
+                                        </text>
+                                      </g>
+                                    );
+                                  }}
+                                />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
+                                <Tooltip cursor={false} contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }} />
+                                <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                                  <LabelList dataKey="count" position="top" fill="#64748b" fontSize={12} fontWeight="bold" />
+                                </Bar>
+                              </ReBarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-slate-400 text-sm italic">
+                            Nenhuma tag registrada
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
