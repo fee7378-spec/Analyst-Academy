@@ -100,6 +100,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
   const canEditHistorico = currentUser.role === 'Administrador' || permissions['historico'] === 'edit';
+  const canViewHistorico = currentUser.role === 'Administrador' || permissions['historico'] !== 'none';
   const canEditNovaMonitoria = currentUser.role === 'Administrador' || permissions['nova-monitoria'] === 'edit';
   const canViewAnalysts = currentUser.role === 'Administrador' || permissions['analistas'] !== 'none';
 
@@ -222,7 +223,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
       analyst_id: analysis.analyst_id.toString(),
       company_name: analysis.company_name,
       cnpj: analysis.cnpj,
-      treatment_date: analysis.treatment_date,
+      treatment_date: parseCSVDate(analysis.treatment_date),
       demand_number: analysis.demand_number,
       demand_type: isOther ? 'Outro' : analysis.demand_type,
       track: analysis.track,
@@ -276,14 +277,22 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
       }
     }
     
-    // Handle YYYY-MM-DD (already correct)
+    // Handle YYYY-MM-DD or DD-MM-YYYY
     if (dateStr.includes('-')) {
       const parts = dateStr.split('-');
       if (parts.length === 3) {
-        const [year, month, day] = parts;
-        if (year.length === 4) return dateStr;
-        // Handle DD-MM-YYYY
-        return `${day}-${month.padStart(2, '0')}-${year.padStart(2, '0')}`;
+        const [p1, p2, p3] = parts;
+        if (p1.length === 4) {
+          // YYYY-MM-DD
+          return dateStr;
+        } else {
+          // Assume DD-MM-YYYY
+          const day = p1;
+          const month = p2;
+          const year = p3;
+          const fullYear = year.length === 2 ? `20${year}` : year;
+          return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
       }
     }
     
@@ -372,7 +381,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     
     // Example row
     const example = [
-      'Extranet', '123456', 'Abertura de conta', 'Empresa Exemplo', '12345678000190',
+      'Extranet', '123456', 'Abertura de conta', 'Empresa Exemplo', '12.345.678/0001-90',
       'Nome do Analista', 'login.analista', format(new Date(), 'dd/MM/yyyy'), 'Não', '',
       '', 'Observação opcional'
     ];
@@ -978,15 +987,17 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   <option value="Sim" className="dark:bg-slate-900">Sim</option>
                 </select>
               </div>
-              {canEditHistorico && (
+              {canViewHistorico && (
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => setShowClearModal(true)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-red-500/20 text-sm font-bold"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Limpar Histórico
-                  </button>
+                  {canEditHistorico && (
+                    <button 
+                      onClick={() => setShowClearModal(true)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-red-500/20 text-sm font-bold"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Limpar Histórico
+                    </button>
+                  )}
                   <button 
                     onClick={() => setShowImportModal(true)}
                     className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 text-sm font-bold"

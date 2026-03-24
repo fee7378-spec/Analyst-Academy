@@ -1018,6 +1018,49 @@ export const api = {
     return null;
   },
 
+  async bulkRenameDemandType(oldName: string, newName: string, trackIds: string[]) {
+    // 1. Update Tracks
+    const tracksSnapshot = await get(ref(db, 'tracks'));
+    const trackNames: string[] = [];
+    if (tracksSnapshot.exists()) {
+      const tracks = tracksSnapshot.val();
+      const trackUpdates: any = {};
+      Object.keys(tracks).forEach(key => {
+        if (trackIds.includes(tracks[key].id)) {
+          trackNames.push(tracks[key].name);
+          const currentTypes = tracks[key].formConfig?.demandTypes || [];
+          if (currentTypes.includes(oldName)) {
+            const newTypes = currentTypes.map((t: string) => t === oldName ? newName : t);
+            trackUpdates[`tracks/${key}/formConfig/demandTypes`] = newTypes;
+          }
+        }
+      });
+      if (Object.keys(trackUpdates).length > 0) {
+        await update(ref(db), trackUpdates);
+      }
+    }
+
+    // 2. Update Analyses
+    const analysesSnapshot = await get(ref(db, 'analyses'));
+    if (analysesSnapshot.exists()) {
+      const analyses = analysesSnapshot.val();
+      const analysisUpdates: any = {};
+      Object.keys(analyses).forEach(key => {
+        const analysis = analyses[key];
+        // Only update if it belongs to one of the selected tracks AND has the old name
+        if (trackNames.includes(analysis.track) && analysis.demand_type === oldName) {
+          analysisUpdates[`analyses/${key}/demand_type`] = newName;
+        }
+      });
+      if (Object.keys(analysisUpdates).length > 0) {
+        await update(ref(db), analysisUpdates);
+      }
+    }
+    
+    await logAction('Renomear Tipo de Demanda', `Renomeado de "${oldName}" para "${newName}" em ${trackIds.length} esteiras`);
+    return { success: true };
+  },
+
   async deleteTrack(id: string) {
     const snapshot = await get(ref(db, 'tracks'));
     if (!snapshot.exists()) return { success: false };

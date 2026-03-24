@@ -41,7 +41,7 @@ export const DEMAND_TYPES = [
   'Alteração de officer',
   'Alteração de segmento',
   'Bloqueio',
-  'Criação de login portal ADM - Inclusão/Exclusão',
+  'Criação de login Portal ADM',
   'Desbloqueio',
   'Encerramento de conta',
   'Inclusão de mercado',

@@ -55,8 +55,11 @@ export const Tracks: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showMassEditModal, setShowMassEditModal] = useState(false);
   const [massEditForm, setMassEditForm] = useState({
+    mode: 'add' as 'add' | 'rename',
     tag: '',
     demandType: '',
+    oldDemandType: '',
+    newDemandType: '',
     selectedTracks: [] as string[]
   });
   const [editingTrack, setEditingTrack] = useState<any | null>(null);
@@ -134,10 +137,19 @@ export const Tracks: React.FC = () => {
       toast.error('Você não tem permissão para realizar esta ação');
       return;
     }
-    if (!massEditForm.tag.trim() && !massEditForm.demandType.trim()) {
-      toast.error('Preencha pelo menos uma Tag ou Tipo de Demanda');
-      return;
+
+    if (massEditForm.mode === 'add') {
+      if (!massEditForm.tag.trim() && !massEditForm.demandType.trim()) {
+        toast.error('Preencha pelo menos uma Tag ou Tipo de Demanda');
+        return;
+      }
+    } else {
+      if (!massEditForm.oldDemandType || !massEditForm.newDemandType.trim()) {
+        toast.error('Selecione o tipo atual e digite o novo nome');
+        return;
+      }
     }
+
     if (massEditForm.selectedTracks.length === 0) {
       toast.error('Selecione pelo menos uma esteira');
       return;
@@ -145,30 +157,39 @@ export const Tracks: React.FC = () => {
 
     setSaving(true);
     try {
-      for (const trackId of massEditForm.selectedTracks) {
-        const track = tracks.find(t => t.id === trackId);
-        if (track) {
-          const newTags = [...(track.formConfig?.tags || [])];
-          const newDemandTypes = [...(track.formConfig?.demandTypes || [])];
+      if (massEditForm.mode === 'add') {
+        for (const trackId of massEditForm.selectedTracks) {
+          const track = tracks.find(t => t.id === trackId);
+          if (track) {
+            const newTags = [...(track.formConfig?.tags || [])];
+            const newDemandTypes = [...(track.formConfig?.demandTypes || [])];
 
-          if (massEditForm.tag.trim() && !newTags.includes(massEditForm.tag.trim())) {
-            newTags.push(massEditForm.tag.trim());
-          }
-          if (massEditForm.demandType.trim() && !newDemandTypes.includes(massEditForm.demandType.trim())) {
-            newDemandTypes.push(massEditForm.demandType.trim());
-          }
-
-          await api.updateTrack(track.id, {
-            ...track,
-            formConfig: {
-              ...track.formConfig,
-              tags: newTags,
-              demandTypes: newDemandTypes
+            if (massEditForm.tag.trim() && !newTags.includes(massEditForm.tag.trim())) {
+              newTags.push(massEditForm.tag.trim());
             }
-          });
+            if (massEditForm.demandType.trim() && !newDemandTypes.includes(massEditForm.demandType.trim())) {
+              newDemandTypes.push(massEditForm.demandType.trim());
+            }
+
+            await api.updateTrack(track.id, {
+              ...track,
+              formConfig: {
+                ...track.formConfig,
+                tags: newTags,
+                demandTypes: newDemandTypes
+              }
+            });
+          }
         }
+      } else {
+        // Rename mode using the new API method
+        await api.bulkRenameDemandType(
+          massEditForm.oldDemandType,
+          massEditForm.newDemandType.trim(),
+          massEditForm.selectedTracks
+        );
       }
-      toast.success('Esteiras atualizadas em massa com sucesso');
+      toast.success(massEditForm.mode === 'add' ? 'Esteiras atualizadas em massa com sucesso' : 'Tipos de demanda renomeados com sucesso');
       setShowMassEditModal(false);
       loadTracks();
     } catch (err: any) {
@@ -233,11 +254,14 @@ export const Tracks: React.FC = () => {
         <div className="flex items-center gap-3">
           {canEdit && (
             <>
-              <button 
+                <button 
                 onClick={() => {
                   setMassEditForm({
+                    mode: 'add',
                     tag: '',
                     demandType: '',
+                    oldDemandType: '',
+                    newDemandType: '',
                     selectedTracks: []
                   });
                   setShowMassEditModal(true);
@@ -372,34 +396,98 @@ export const Tracks: React.FC = () => {
                   <X className="w-6 h-6" />
                 </button>
               </div>
+
+              <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
+                <div className="flex gap-2 p-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 max-w-sm">
+                  <button
+                    onClick={() => setMassEditForm({ ...massEditForm, mode: 'add' })}
+                    className={`flex-1 py-2 rounded-lg font-bold text-xs transition-all ${
+                      massEditForm.mode === 'add'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    Adicionar Novos
+                  </button>
+                  <button
+                    onClick={() => setMassEditForm({ ...massEditForm, mode: 'rename' })}
+                    className={`flex-1 py-2 rounded-lg font-bold text-xs transition-all ${
+                      massEditForm.mode === 'rename'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    Renomear Existente
+                  </button>
+                </div>
+              </div>
               
               <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Adicionar Tag
-                    </label>
-                    <input
-                      type="text"
-                      value={massEditForm.tag}
-                      onChange={(e) => setMassEditForm({ ...massEditForm, tag: e.target.value })}
-                      placeholder="Nova tag..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                {massEditForm.mode === 'add' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        Adicionar Tag
+                      </label>
+                      <input
+                        type="text"
+                        value={massEditForm.tag}
+                        onChange={(e) => setMassEditForm({ ...massEditForm, tag: e.target.value })}
+                        placeholder="Nova tag..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        Adicionar Tipo de Demanda
+                      </label>
+                      <input
+                        type="text"
+                        value={massEditForm.demandType}
+                        onChange={(e) => setMassEditForm({ ...massEditForm, demandType: e.target.value })}
+                        placeholder="Novo tipo de demanda..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Adicionar Tipo de Demanda
-                    </label>
-                    <input
-                      type="text"
-                      value={massEditForm.demandType}
-                      onChange={(e) => setMassEditForm({ ...massEditForm, demandType: e.target.value })}
-                      placeholder="Novo tipo de demanda..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        Tipo de Demanda Atual
+                      </label>
+                      <select
+                        value={massEditForm.oldDemandType}
+                        onChange={(e) => setMassEditForm({ ...massEditForm, oldDemandType: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      >
+                        <option value="">Selecione um tipo...</option>
+                        {Array.from(new Set(
+                          tracks
+                            .filter(t => massEditForm.selectedTracks.length === 0 || massEditForm.selectedTracks.includes(t.id))
+                            .flatMap(t => t.formConfig?.demandTypes || [])
+                        )).sort().map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-slate-500 italic">
+                        Mostrando tipos das esteiras selecionadas
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        Novo Nome
+                      </label>
+                      <input
+                        type="text"
+                        value={massEditForm.newDemandType}
+                        onChange={(e) => setMassEditForm({ ...massEditForm, newDemandType: e.target.value })}
+                        placeholder="Novo nome para o tipo..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">

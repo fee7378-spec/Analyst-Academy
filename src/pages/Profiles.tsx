@@ -62,7 +62,7 @@ const TEMPLATES: Record<string, UserPermissions> = {
   }
 };
 
-const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React.Dispatch<React.SetStateAction<ProfileTemplate[]>>, canEdit: boolean }> = ({ templates, setTemplates, canEdit }) => {
+const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React.Dispatch<React.SetStateAction<ProfileTemplate[]>>, canEdit: boolean, onUpdate?: () => void }> = ({ templates, setTemplates, canEdit, onUpdate }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<ProfileTemplate | null>(null);
   const [saving, setSaving] = useState(false);
@@ -86,6 +86,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
         setTemplates(templates.map(t => t.id === selectedTemplate.id ? selectedTemplate : t));
         toast.success('Template atualizado com sucesso!');
         setSelectedTemplate(null);
+        if (onUpdate) onUpdate();
       } else {
         const created = await api.createTemplate(newTemplate);
         setTemplates([...templates, created]);
@@ -713,7 +714,7 @@ export const Profiles: React.FC = () => {
                               {user.role}
                             </span>
                             {!user.templateId && (
-                              <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-amber-200 dark:border-amber-800">
+                              <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-purple-200 dark:border-purple-800">
                                 Customizado
                               </span>
                             )}
@@ -826,7 +827,7 @@ export const Profiles: React.FC = () => {
                           ))}
                         </select>
                         {!selectedUser.templateId && (
-                          <span className="ml-2 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-amber-200 dark:border-amber-800">
+                          <span className="ml-2 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-purple-200 dark:border-purple-800">
                             Customizado
                           </span>
                         )}
@@ -920,7 +921,7 @@ export const Profiles: React.FC = () => {
         )}
       </AnimatePresence>
       ) : (
-        <TemplatesTab templates={templates} setTemplates={setTemplates} canEdit={canEdit} />
+        <TemplatesTab templates={templates} setTemplates={setTemplates} canEdit={canEdit} onUpdate={loadData} />
       )}
 
       <AnimatePresence>
@@ -1066,7 +1067,7 @@ export const Profiles: React.FC = () => {
                         Perfil: {newUserForm.role}
                       </p>
                       {!newUserForm.templateId && (
-                        <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-amber-200 dark:border-amber-800">
+                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-purple-200 dark:border-purple-800">
                           Customizado
                         </span>
                       )}
