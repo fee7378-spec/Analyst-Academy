@@ -1096,7 +1096,22 @@ export const api = {
 
   async deleteConsolidatedData() {
     await remove(ref(db, 'consolidated_data'));
-    await logAction('Excluir Base Consolidada', 'Toda a base de dados consolidada foi excluída');
+    await remove(ref(db, 'metadata/last_processing_date'));
+    
+    // Also clear productivity from all analysts
+    const analystsSnapshot = await get(ref(db, 'analysts'));
+    if (analystsSnapshot.exists()) {
+      const analystsObj = analystsSnapshot.val();
+      const updates: any = {};
+      Object.keys(analystsObj).forEach(key => {
+        updates[`analysts/${key}/productivity`] = null;
+      });
+      if (Object.keys(updates).length > 0) {
+        await update(ref(db), updates);
+      }
+    }
+
+    await logAction('Excluir Base Consolidada', 'Toda a base de dados consolidada e produtividade dos analistas foram excluídas');
     return { success: true };
   },
 

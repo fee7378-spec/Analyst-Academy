@@ -126,6 +126,7 @@ export const DataProcessing: React.FC = () => {
     setIsDeleting(true);
     try {
       await api.deleteConsolidatedData();
+      await loadLastProcessingDate();
       toast.success('Base consolidada excluída com sucesso!');
       setShowDeleteModal(false);
     } catch (err) {
