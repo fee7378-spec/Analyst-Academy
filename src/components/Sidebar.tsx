@@ -41,7 +41,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ user }) => {
     { icon: BarChart3, label: 'Dashboard', path: '/dashboard', id: 'dashboard' },
     { icon: FilePlus, label: 'Monitorar', path: '/nova-analise', id: 'nova-monitoria' },
     { icon: Layers, label: 'Esteiras', path: '/esteiras', id: 'esteiras' },
-    { icon: UserCheck, label: 'Supervisores', path: '/supervisores', id: 'supervisores' },
     { icon: Users, label: 'Analistas', path: '/analistas', id: 'analistas' },
     { icon: History, label: 'Histórico', path: '/historico', id: 'historico' },
     { icon: FileSpreadsheet, label: 'Processamento', path: '/processamento', id: 'processamento' },

@@ -25,7 +25,6 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 const MODULES = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'nova-monitoria', label: 'Monitorar' },
-  { id: 'supervisores', label: 'Supervisores' },
   { id: 'analistas', label: 'Analistas' },
   { id: 'esteiras', label: 'Esteiras' },
   { id: 'historico', label: 'Histórico' },
@@ -39,7 +38,6 @@ const TEMPLATES: Record<string, UserPermissions> = {
   'Administrador': {
     dashboard: 'edit',
     'nova-monitoria': 'edit',
-    supervisores: 'edit',
     analistas: 'edit',
     esteiras: 'edit',
     historico: 'edit',
@@ -51,7 +49,6 @@ const TEMPLATES: Record<string, UserPermissions> = {
   'Monitor': {
     dashboard: 'view',
     'nova-monitoria': 'edit',
-    supervisores: 'view',
     analistas: 'view',
     esteiras: 'none',
     historico: 'view',
@@ -545,7 +542,6 @@ export const Profiles: React.FC = () => {
     const currentPerms = selectedUser.permissions || {
       dashboard: 'none',
       'nova-monitoria': 'none',
-      supervisores: 'none',
       analistas: 'none',
       historico: 'none',
       logs: 'none',

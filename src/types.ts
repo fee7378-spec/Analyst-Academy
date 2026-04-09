@@ -5,7 +5,6 @@ export type PermissionLevel = 'view' | 'edit' | 'none';
 export interface UserPermissions {
   dashboard: PermissionLevel;
   'nova-monitoria': PermissionLevel;
-  supervisores: PermissionLevel;
   analistas: PermissionLevel;
   historico: PermissionLevel;
   logs: PermissionLevel;
@@ -20,7 +19,6 @@ export interface User {
   name: string;
   email: string;
   matricula: string;
-  supervisor?: string;
   role: UserRole;
   admission_date?: string;
   esteira?: string;
@@ -35,14 +33,6 @@ export interface ProfileTemplate {
   name: string;
   description: string;
   permissions: UserPermissions;
-}
-
-export interface Supervisor {
-  id: number;
-  name: string;
-  matricula: string;
-  role: 'supervisor';
-  esteira?: string;
 }
 
 export type AnalysisStatus = 'Sim' | 'Não';

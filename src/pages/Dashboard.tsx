@@ -40,7 +40,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
     return () => observer.disconnect();
   }, []);
   const [analysts, setAnalysts] = useState<User[]>([]);
-  const [supervisors, setSupervisors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState(() => {
     const now = new Date();
@@ -58,7 +57,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
     return {
       track: '',
       analyst_id: '',
-      supervisor_name: '',
       start_date: formatDate(firstDay),
       end_date: formatDate(lastDay)
     };
@@ -91,10 +89,9 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
       setLoading(true);
       setError(null);
       try {
-        const [analysesData, analystsData, supervisorsData, tracksData, consolidated] = await Promise.all([
+        const [analysesData, analystsData, tracksData, consolidated] = await Promise.all([
           api.getAnalyses(),
           canViewAnalysts ? api.getAnalysts() : Promise.resolve([]),
-          canViewAnalysts ? api.getSupervisors() : Promise.resolve([]),
           api.getTracks(),
           api.getConsolidatedData()
         ]);
@@ -104,7 +101,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
         setConsolidatedData(consolidated);
         if (canViewAnalysts) {
           setAnalysts(analystsData);
-          setSupervisors(supervisorsData);
         }
       } catch (err: any) {
         console.error("Failed to load initial data:", err);
@@ -144,12 +140,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
     }
     if (filters.analyst_id) {
       filtered = filtered.filter(a => String(a.analyst_id) === String(filters.analyst_id));
-    }
-    if (filters.supervisor_name) {
-      filtered = filtered.filter(a => {
-        const analyst = analysts.find(u => String(u.id) === String(a.analyst_id));
-        return analyst && analyst.supervisor === filters.supervisor_name;
-      });
     }
 
     const totalAnalyses = { count: filtered.length };
@@ -204,9 +194,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
 
       // Filter by track (using analyst's current track as requested)
       if (filters.track && analyst.esteira !== filters.track) return false;
-
-      // Filter by supervisor
-      if (filters.supervisor_name && analyst.supervisor !== filters.supervisor_name) return false;
 
       // Filter by analyst_id
       if (filters.analyst_id && String(analyst.id) !== String(filters.analyst_id)) return false;
@@ -359,70 +346,30 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <button 
-              onClick={loadDashboard}
-              disabled={loading}
-              className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-500 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all"
-              title="Atualizar Dashboard"
-            >
-              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-            {!individualMode && (
-              <>
-                <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <Layers className="w-4 h-4 text-slate-400" />
-                  <select 
-                    value={filters.track}
-                    onChange={e => setFilters({...filters, track: e.target.value})}
-                    className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
-                  >
-                    <option value="" className="dark:bg-slate-900">Todas as Esteiras</option>
-                    {tracks.map(t => <option key={t.id} value={t.name} className="dark:bg-slate-900">{t.name}</option>)}
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <UserCircle className="w-4 h-4 text-slate-400" />
-                  <select 
-                    value={filters.supervisor_name}
-                    onChange={e => setFilters({...filters, supervisor_name: e.target.value})}
-                    className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
-                  >
-                    <option value="" className="dark:bg-slate-900">Todas as Supervisões</option>
-                    {supervisors.map(s => <option key={s.id} value={s.name} className="dark:bg-slate-900">{s.name}</option>)}
-                  </select>
-                </div>
-              </>
-            )}
-          </div>
+        <div className="flex flex-wrap justify-end items-center gap-3">
+          <button 
+            onClick={loadDashboard}
+            disabled={loading}
+            className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-500 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all"
+            title="Atualizar Dashboard"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
 
           {!individualMode && (
-            <div className="flex justify-end items-center gap-3">
-              <button 
-                onClick={() => {
-                  const now = new Date();
-                  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-                  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                  const formatDate = (date: Date) => {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    return `${year}-${month}-${day}`;
-                  };
-                  setFilters({
-                    track: '',
-                    analyst_id: '',
-                    supervisor_name: '',
-                    start_date: formatDate(firstDay),
-                    end_date: formatDate(lastDay)
-                  });
-                }}
-                className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
-              >
-                Limpar Filtros
-              </button>
+            <>
+              <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <Layers className="w-4 h-4 text-slate-400" />
+                <select 
+                  value={filters.track}
+                  onChange={e => setFilters({...filters, track: e.target.value})}
+                  className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
+                >
+                  <option value="" className="dark:bg-slate-900">Todas as Esteiras</option>
+                  {tracks.map(t => <option key={t.id} value={t.name} className="dark:bg-slate-900">{t.name}</option>)}
+                </select>
+              </div>
+
               <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <Filter className="w-4 h-4 text-slate-400" />
                 <input 
@@ -439,7 +386,30 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                   className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
                 />
               </div>
-            </div>
+
+              <button 
+                onClick={() => {
+                  const now = new Date();
+                  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                  const formatDate = (date: Date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                  };
+                  setFilters({
+                    track: '',
+                    analyst_id: '',
+                    start_date: formatDate(firstDay),
+                    end_date: formatDate(lastDay)
+                  });
+                }}
+                className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
+              >
+                Limpar Filtros
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -463,10 +433,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
               <span className="flex items-center gap-1.5">
                 <Layers className="w-4 h-4" />
                 Esteira: {selectedAnalyst.esteira}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <UserCircle className="w-4 h-4" />
-                Supervisor: {selectedAnalyst.supervisor}
               </span>
             </div>
           </div>
@@ -587,7 +553,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                 </h3>
                 <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
                   {(data?.errorsByType?.length || 0) > 0 ? (
-                    <div className="h-full" style={{ minWidth: Math.max(800, (data?.errorsByType?.length || 0) * 180) }}>
+                    <div className="h-full" style={{ minWidth: Math.max(800, (data?.errorsByType?.length || 0) * 250) }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data.errorsByType} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
@@ -596,7 +562,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                             axisLine={false} 
                             tickLine={false} 
                             interval={0}
-                            height={30}
+                            height={20}
                             tick={(props) => {
                               const { x, y, payload } = props;
                               if (!payload.value) return null;
@@ -605,7 +571,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                                   <text
                                     x={0}
                                     y={0}
-                                    dy={12}
+                                    dy={8}
                                     textAnchor="middle"
                                     fill="#64748b"
                                     fontSize={12}
@@ -642,7 +608,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                 </h3>
                 <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
                   {(data?.errorsByTag?.length || 0) > 0 ? (
-                    <div className="h-full" style={{ minWidth: Math.max(800, (data?.errorsByTag?.length || 0) * 180) }}>
+                    <div className="h-full" style={{ minWidth: Math.max(800, (data?.errorsByTag?.length || 0) * 250) }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data.errorsByTag} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
@@ -651,7 +617,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                             axisLine={false} 
                             tickLine={false} 
                             interval={0}
-                            height={30}
+                            height={20}
                             tick={(props) => {
                               const { x, y, payload } = props;
                               if (!payload.value) return null;
@@ -660,7 +626,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                                   <text
                                     x={0}
                                     y={0}
-                                    dy={12}
+                                    dy={8}
                                     textAnchor="middle"
                                     fill="#64748b"
                                     fontSize={12}

@@ -1,4 +1,4 @@
-import { User, Supervisor, Analysis } from '../types';
+import { User, Analysis } from '../types';
 import { db, auth, logsDb, ref, get, set, update, remove, push } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
 import { DEMAND_TYPES, TAGS } from '../constants';
@@ -15,7 +15,6 @@ export const normalizeString = (str: string) => {
 const DEFAULT_PERMISSIONS = {
   dashboard: 'view',
   'nova-monitoria': 'view',
-  supervisores: 'none',
   analistas: 'none',
   historico: 'view',
   logs: 'none',
@@ -27,7 +26,6 @@ const DEFAULT_PERMISSIONS = {
 const ADMIN_PERMISSIONS = {
   dashboard: 'edit',
   'nova-monitoria': 'edit',
-  supervisores: 'edit',
   analistas: 'edit',
   historico: 'edit',
   logs: 'edit',
@@ -379,83 +377,6 @@ export const api = {
     return analyst;
   },
 
-  async getSupervisors() {
-    const snapshot = await get(ref(db, 'supervisors'));
-    if (!snapshot.exists()) return [];
-    return Object.values(snapshot.val());
-  },
-
-  async createSupervisor(data: any) {
-    const nextId = await getNextId('supervisors');
-    const newSup = { ...data, id: nextId };
-    const newRef = push(ref(db, 'supervisors'));
-    await set(newRef, newSup);
-    await logAction('Criar Supervisor', `Supervisor ${data.name} criado`);
-    return newSup;
-  },
-
-  async updateSupervisor(id: number, data: any) {
-    const snapshot = await get(ref(db, 'supervisors'));
-    if (!snapshot.exists()) throw new Error('Supervisor não encontrado');
-    
-    const supsObj = snapshot.val();
-    const supKey = Object.keys(supsObj).find(key => supsObj[key].id === id);
-    if (!supKey) throw new Error('Supervisor não encontrado');
-    
-    const oldName = supsObj[supKey].name;
-    const newName = data.name;
-
-    await update(ref(db, `supervisors/${supKey}`), data);
-
-    if (newName && oldName && newName !== oldName) {
-      const analystsSnapshot = await get(ref(db, 'analysts'));
-      if (analystsSnapshot.exists()) {
-        const analystsObj = analystsSnapshot.val();
-        const updates: any = {};
-        Object.keys(analystsObj).forEach(key => {
-          if (analystsObj[key].supervisor === oldName) {
-            updates[`analysts/${key}/supervisor`] = newName;
-          }
-        });
-        if (Object.keys(updates).length > 0) {
-          await update(ref(db), updates);
-        }
-      }
-    }
-
-    await logAction('Atualizar Supervisor', `Supervisor ID ${id} atualizado`);
-    return { ...supsObj[supKey], ...data };
-  },
-
-  async deleteSupervisor(id: number) {
-    const snapshot = await get(ref(db, 'supervisors'));
-    if (!snapshot.exists()) return { success: true };
-    
-    const supsObj = snapshot.val();
-    const supKey = Object.keys(supsObj).find(key => supsObj[key].id === id);
-    if (supKey) {
-      const oldName = supsObj[supKey].name;
-      await remove(ref(db, `supervisors/${supKey}`));
-      
-      const analystsSnapshot = await get(ref(db, 'analysts'));
-      if (analystsSnapshot.exists()) {
-        const analystsObj = analystsSnapshot.val();
-        const updates: any = {};
-        Object.keys(analystsObj).forEach(key => {
-          if (analystsObj[key].supervisor === oldName) {
-            updates[`analysts/${key}/supervisor`] = 'N/A';
-          }
-        });
-        if (Object.keys(updates).length > 0) {
-          await update(ref(db), updates);
-        }
-      }
-
-      await logAction('Excluir Supervisor', `Supervisor ID ${id} excluído`);
-    }
-    return { success: true };
-  },
-
   async getAnalyses() {
     const snapshot = await get(ref(db, 'analyses'));
     if (!snapshot.exists()) return [];
@@ -738,7 +659,7 @@ export const api = {
     return { success: true };
   },
 
-  async getDashboard(params?: { track?: string; analyst_id?: string; supervisor_name?: string; start_date?: string; end_date?: string }) {
+  async getDashboard(params?: { track?: string; analyst_id?: string; start_date?: string; end_date?: string }) {
     const analysesSnapshot = await get(ref(db, 'analyses'));
     const usersSnapshot = await get(ref(db, 'users'));
     
@@ -758,12 +679,6 @@ export const api = {
     }
     if (params?.track) {
       filtered = filtered.filter(a => a.track === params.track);
-    }
-    if (params?.supervisor_name) {
-      filtered = filtered.filter(a => {
-        const analyst = users.find(u => u.id === Number(a.analyst_id));
-        return analyst && analyst.supervisor === params.supervisor_name;
-      });
     }
 
     const byStatusMap = filtered.reduce((acc, a) => {
@@ -796,7 +711,6 @@ export const api = {
     
     allAnalysts.forEach(analyst => {
       if (params?.analyst_id && Number(analyst.id) !== Number(params.analyst_id)) return;
-      if (params?.supervisor_name && analyst.supervisor !== params.supervisor_name) return;
       
       let analystTotal = 0;
       if (analyst.productivity) {
@@ -855,7 +769,6 @@ export const api = {
       let weekProductivity = 0;
       allAnalysts.forEach(analyst => {
         if (params?.analyst_id && Number(analyst.id) !== Number(params.analyst_id)) return;
-        if (params?.supervisor_name && analyst.supervisor !== params.supervisor_name) return;
         if (params?.track && analyst.esteira !== params.track) return;
 
         if (analyst.productivity) {
@@ -889,7 +802,6 @@ export const api = {
         let dayProductivity = 0;
         allAnalysts.forEach(analyst => {
           if (params?.analyst_id && Number(analyst.id) !== Number(params.analyst_id)) return;
-          if (params?.supervisor_name && analyst.supervisor !== params.supervisor_name) return;
           if (params?.track && analyst.esteira !== params.track) return;
           if (analyst.productivity && analyst.productivity[dayKey]) {
             dayProductivity += (Number(analyst.productivity[dayKey]) || 0);

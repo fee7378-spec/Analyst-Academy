@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api, normalizeString } from '../lib/api';
-import { User, Supervisor } from '../types';
+import { User } from '../types';
 import { 
   Plus, 
   Search, 
@@ -50,7 +50,6 @@ interface AnalystStats {
 
 export const Analysts: React.FC = () => {
   const [analysts, setAnalysts] = useState<User[]>([]);
-  const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,7 +65,6 @@ export const Analysts: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     matricula: '',
-    supervisor: '',
     admission_date: getTodayForInput(),
     esteira: ''
   });
@@ -108,15 +106,13 @@ export const Analysts: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [analystsData, supervisorsData, tracksData, analysesData, consolidated] = await Promise.all([
+      const [analystsData, tracksData, analysesData, consolidated] = await Promise.all([
         api.getAnalysts(),
-        api.getSupervisors(),
         api.getTracks(),
         api.getAnalyses(),
         api.getConsolidatedData()
       ]);
       setAnalysts(analystsData);
-      setSupervisors(supervisorsData);
       setTracks(tracksData);
       setAnalyses(analysesData);
       setConsolidatedData(consolidated);
@@ -159,7 +155,6 @@ export const Analysts: React.FC = () => {
     setFormData({
       name: '',
       matricula: '',
-      supervisor: '',
       admission_date: getTodayForInput(),
       esteira: tracks.length > 0 ? tracks[0].name : ''
     });
@@ -184,7 +179,6 @@ export const Analysts: React.FC = () => {
     setFormData({
       name: analyst.name,
       matricula: analyst.matricula,
-      supervisor: analyst.supervisor || '',
       admission_date: analyst.admission_date || getTodayForInput(),
       esteira: analyst.esteira || (tracks.length > 0 ? tracks[0].name : '')
     });
@@ -313,11 +307,8 @@ export const Analysts: React.FC = () => {
   const filteredAnalysts = Array.isArray(analysts) ? analysts.filter(a => {
     const search = (searchTerm || '').toLowerCase();
     return (a.name || '').toLowerCase().includes(search) || 
-           (a.matricula || '').toLowerCase().includes(search) ||
-           (a.supervisor && a.supervisor.toLowerCase().includes(search));
+           (a.matricula || '').toLowerCase().includes(search);
   }) : [];
-
-  const supervisorsList = Array.isArray(supervisors) ? supervisors : [];
 
   return (
     <div className="space-y-6">
@@ -350,7 +341,7 @@ export const Analysts: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 
             type="text"
-            placeholder="Buscar por nome, matrícula ou supervisor..."
+            placeholder="Buscar por nome ou matrícula..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
@@ -409,10 +400,6 @@ export const Analysts: React.FC = () => {
 
             <div className="space-y-3 mb-6">
               <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-                <UserCheck className="w-4 h-4 text-slate-400 dark:text-slate-600" />
-                Supervisor: {analyst.supervisor || 'N/A'}
-              </div>
-              <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
                 <Briefcase className="w-4 h-4 text-slate-400 dark:text-slate-600" />
                 Esteira: {analyst.esteira}
               </div>
@@ -470,20 +457,6 @@ export const Analysts: React.FC = () => {
                     onChange={e => setFormData({...formData, matricula: e.target.value.toUpperCase()})}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                   />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Supervisor</label>
-                  <select 
-                    required
-                    value={formData.supervisor}
-                    onChange={e => setFormData({...formData, supervisor: e.target.value})}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
-                  >
-                    <option value="" className="dark:bg-slate-900">Selecione um Supervisor</option>
-                    {supervisorsList.map(s => (
-                      <option key={s.id} value={s.name} className="dark:bg-slate-900">{s.name}</option>
-                    ))}
-                  </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Esteira</label>
@@ -761,7 +734,7 @@ export const Analysts: React.FC = () => {
                       </h3>
                       <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
                         {getAnalystErrorStats(selectedAnalyst).errorsByType.length > 0 ? (
-                          <div className="h-full" style={{ minWidth: Math.max(800, getAnalystErrorStats(selectedAnalyst).errorsByType.length * 180) }}>
+                          <div className="h-full" style={{ minWidth: Math.max(800, getAnalystErrorStats(selectedAnalyst).errorsByType.length * 250) }}>
                             <ResponsiveContainer width="100%" height="100%">
                               <ReBarChart data={getAnalystErrorStats(selectedAnalyst).errorsByType} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
@@ -770,7 +743,7 @@ export const Analysts: React.FC = () => {
                                   axisLine={false} 
                                   tickLine={false} 
                                   interval={0}
-                                  height={30}
+                                  height={20}
                                   tick={(props) => {
                                     const { x, y, payload } = props;
                                     if (!payload.value) return null;
@@ -779,7 +752,7 @@ export const Analysts: React.FC = () => {
                                         <text
                                           x={0}
                                           y={0}
-                                          dy={12}
+                                          dy={8}
                                           textAnchor="middle"
                                           fill="#64748b"
                                           fontSize={12}
@@ -816,7 +789,7 @@ export const Analysts: React.FC = () => {
                       </h3>
                       <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
                         {getAnalystErrorStats(selectedAnalyst).errorsByTag.length > 0 ? (
-                          <div className="h-full" style={{ minWidth: Math.max(800, getAnalystErrorStats(selectedAnalyst).errorsByTag.length * 180) }}>
+                          <div className="h-full" style={{ minWidth: Math.max(800, getAnalystErrorStats(selectedAnalyst).errorsByTag.length * 250) }}>
                             <ResponsiveContainer width="100%" height="100%">
                               <ReBarChart data={getAnalystErrorStats(selectedAnalyst).errorsByTag} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
@@ -825,7 +798,7 @@ export const Analysts: React.FC = () => {
                                   axisLine={false} 
                                   tickLine={false} 
                                   interval={0}
-                                  height={30}
+                                  height={20}
                                   tick={(props) => {
                                     const { x, y, payload } = props;
                                     if (!payload.value) return null;
@@ -834,7 +807,7 @@ export const Analysts: React.FC = () => {
                                         <text
                                           x={0}
                                           y={0}
-                                          dy={12}
+                                          dy={8}
                                           textAnchor="middle"
                                           fill="#64748b"
                                           fontSize={12}

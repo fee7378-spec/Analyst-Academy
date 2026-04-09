@@ -217,12 +217,6 @@ export const Profile: React.FC = () => {
                   <span className="text-slate-500">Esteira</span>
                   <span className="font-bold text-slate-700 dark:text-slate-300">{user.esteira || 'N/A'}</span>
                 </div>
-                {user.supervisor && (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Supervisor</span>
-                    <span className="font-bold text-slate-700 dark:text-slate-300">{user.supervisor}</span>
-                  </div>
-                )}
                 <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-blue-500">
                   <Users className="w-4 h-4" />
                   <span className="text-xs font-bold uppercase tracking-wider">{user.role}</span>

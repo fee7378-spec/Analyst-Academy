@@ -6,7 +6,6 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Analyses } from './pages/Analyses';
 import { Analysts } from './pages/Analysts';
-import { Supervisors } from './pages/Supervisors';
 import { Tracks } from './pages/Tracks';
 import { Logs } from './pages/Logs';
 import { Profile } from './pages/Profile';
@@ -41,7 +40,6 @@ export default function App() {
           <Route path="/nova-analise" element={<Analyses mode="form" />} />
           <Route path="/historico" element={<Analyses mode="list" />} />
           <Route path="/analistas" element={<Analysts />} />
-          <Route path="/supervisores" element={<Supervisors />} />
           <Route path="/esteiras" element={<Tracks />} />
           <Route path="/logs" element={<Logs />} />
           <Route path="/perfis" element={<Profiles />} />
