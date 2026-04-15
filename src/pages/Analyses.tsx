@@ -630,10 +630,19 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   key={track.id}
                   onClick={() => {
                     setSelectedTrack(track.name);
-                    let demandType = formData.demand_type;
+                    
+                    let currentDemandTypes = track.formConfig?.demandTypes?.length > 0 ? track.formConfig.demandTypes : DEMAND_TYPES;
                     if (track.name === 'Abertura PJ' || track.name === 'BKO Abertura') {
-                      demandType = 'Abertura de conta';
+                      currentDemandTypes = ['Abertura de conta'];
+                    } else {
+                      currentDemandTypes = currentDemandTypes.filter((type: string) => type !== 'Abertura de conta');
                     }
+                    
+                    let demandType = formData.demand_type;
+                    if (!currentDemandTypes.includes(demandType)) {
+                      demandType = currentDemandTypes[0] || '';
+                    }
+
                     setFormData({ ...formData, track: track.name, demand_type: demandType });
                   }}
                   className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:border-blue-500/30 transition-all group text-left flex flex-col items-center justify-center gap-4"
