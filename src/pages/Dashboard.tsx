@@ -26,6 +26,15 @@ const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMode = false }) => {
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
   const [data, setData] = useState<DashboardData | null>(null);
+  
+  const [weekTooltip, setWeekTooltip] = useState<{
+    show: boolean;
+    x: number;
+    y: number;
+    week: string;
+    monitorias: number;
+    erros: number;
+  } | null>(null);
 
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
@@ -203,6 +212,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
 
     let currentDay = new Date(startDate);
     let weekNumber = 1;
+    let daysCount = 0;
 
     while (currentDay <= endDate) {
       const dayStr = `${String(currentDay.getDate()).padStart(2, '0')}/${String(currentDay.getMonth() + 1).padStart(2, '0')}`;
@@ -228,7 +238,8 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
       });
 
       currentDay.setDate(currentDay.getDate() + 1);
-      if (currentDay.getDay() === 0) { // Sunday starts a new week
+      daysCount++;
+      if (daysCount % 7 === 0) {
         weekNumber++;
       }
     }
@@ -483,13 +494,49 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                         dataKey="date" 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: '#64748b', fontSize: 12 }} 
-                        tickFormatter={(value, index) => {
-                          const item = data.evolution[index];
-                          if (index === 0 || data.evolution[index - 1].week !== item.week) {
-                            return item.week;
-                          }
-                          return '';
+                        interval={0}
+                        tick={(props) => {
+                          const { x, y, payload, index } = props;
+                          const item = data?.evolution?.[index];
+                          if (!item) return null;
+                          const isFirstOfWeek = index === 0 || data.evolution[index - 1].week !== item.week;
+                          if (!isFirstOfWeek) return null;
+                          
+                          const weekData = data.evolution.filter((d: any) => d.week === item.week);
+                          const weekMonitorias = weekData.reduce((acc: number, d: any) => acc + d.count, 0);
+                          const weekErros = weekData.reduce((acc: number, d: any) => acc + d.errors, 0);
+
+                          return (
+                            <g 
+                              transform={`translate(${x},${y})`} 
+                              className="cursor-help"
+                              onMouseEnter={(e) => {
+                                setWeekTooltip({
+                                  show: true,
+                                  x: e.clientX,
+                                  y: e.clientY,
+                                  week: item.week,
+                                  monitorias: weekMonitorias,
+                                  erros: weekErros
+                                });
+                              }}
+                              onMouseMove={(e) => {
+                                setWeekTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
+                              }}
+                              onMouseLeave={() => setWeekTooltip(null)}
+                            >
+                              <text
+                                x={0}
+                                y={0}
+                                dy={16}
+                                textAnchor="middle"
+                                fill="#475569"
+                                className="dark:fill-slate-300 font-bold text-[13px] hover:fill-blue-500 transition-colors"
+                              >
+                                {item.week}
+                              </text>
+                            </g>
+                          );
                         }}
                       />
                       <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
@@ -658,6 +705,30 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
           </div>
         </section>
       </div>
+      {weekTooltip && weekTooltip.show && (
+        <div 
+          className="fixed z-50 pointer-events-none bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-2xl min-w-[160px] animate-in fade-in zoom-in-95 duration-200"
+          style={{ left: weekTooltip.x + 15, top: weekTooltip.y + 15 }}
+        >
+          <p className="font-bold text-white mb-3 text-sm">{weekTooltip.week}</p>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center gap-4">
+              <span className="flex items-center gap-2 text-emerald-400 text-xs font-medium">
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                Monitorias
+              </span>
+              <span className="text-white font-bold">{weekTooltip.monitorias}</span>
+            </div>
+            <div className="flex justify-between items-center gap-4">
+              <span className="flex items-center gap-2 text-red-400 text-xs font-medium">
+                <div className="w-2 h-2 rounded-full bg-red-400" />
+                Erros
+              </span>
+              <span className="text-white font-bold">{weekTooltip.erros}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
