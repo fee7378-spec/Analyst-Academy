@@ -75,6 +75,5 @@ export interface DashboardData {
   byType: { demand_type: string; count: number }[];
   byTrack: { track: string; count: number }[];
   evolution: { week: string; count: number; errors: number }[];
-  errorsByType: { demand_type: string; count: number }[];
   errorsByTag: { tag: string; count: number }[];
 }

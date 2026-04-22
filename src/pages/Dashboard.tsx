@@ -160,15 +160,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
     }, {});
     const byStatus = Object.entries(byStatusMap).map(([status, count]) => ({ status, count }));
 
-    const errorsByTypeMap = filtered.filter(a => a.status === 'Sim').reduce((acc: any, a: any) => {
-      const type = a.demand_type || 'Desconhecido';
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {});
-    const errorsByType = Object.entries(errorsByTypeMap)
-      .map(([demand_type, count]) => ({ demand_type, count }))
-      .sort((a: any, b: any) => (b.count as number) - (a.count as number));
-
     const errorsByTagMap = filtered.filter(a => a.status === 'Sim' && a.tag).reduce((acc: any, a: any) => {
       const tag = a.tag;
       acc[tag] = (acc[tag] || 0) + 1;
@@ -272,7 +263,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
     setData({
       totalAnalyses,
       byStatus,
-      errorsByType,
       errorsByTag,
       evolution,
       totalProductivity,
@@ -592,61 +582,6 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
             </div>
 
             <div className="grid grid-cols-1 gap-8">
-              {/* Erro por Tipo de Demanda */}
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-500" />
-                  Erro por Tipo de Demanda
-                </h3>
-                <div className="h-64 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
-                  {(data?.errorsByType?.length || 0) > 0 ? (
-                    <div className="h-full" style={{ minWidth: Math.max(800, (data?.errorsByType?.length || 0) * 250) }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.errorsByType} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
-                          <XAxis 
-                            dataKey="demand_type" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            interval={0}
-                            height={20}
-                            tick={(props) => {
-                              const { x, y, payload } = props;
-                              if (!payload.value) return null;
-                              return (
-                                <g transform={`translate(${x},${y})`}>
-                                  <text
-                                    x={0}
-                                    y={0}
-                                    dy={8}
-                                    textAnchor="middle"
-                                    fill="#64748b"
-                                    fontSize={12}
-                                    fontWeight="bold"
-                                    className="dark:fill-slate-400"
-                                  >
-                                    {payload.value}
-                                  </text>
-                                </g>
-                              );
-                            }}
-                          />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} padding={{ top: 30 }} />
-                          <Tooltip 
-                            cursor={false}
-                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                            formatter={(value: any) => [value, 'Quant']}
-                          />
-                          <Bar dataKey="count" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                            <LabelList dataKey="count" position="top" fill="#64748b" fontSize={12} fontWeight="bold" />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : <EmptyState />}
-                </div>
-              </div>
-
               {/* Ranking de Tags de Erro */}
               <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">

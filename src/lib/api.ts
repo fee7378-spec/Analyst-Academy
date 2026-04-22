@@ -827,12 +827,6 @@ export const api = {
       });
     }
 
-    const errorsByTypeMap = filtered.filter(a => a.status === 'Sim').reduce((acc, a) => {
-      acc[a.demand_type] = (acc[a.demand_type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    const errorsByType = Object.entries(errorsByTypeMap).map(([demand_type, count]) => ({ demand_type, count }));
-
     const errorsByTrackMap = filtered.filter(a => a.status === 'Sim').reduce((acc, a) => {
       acc[a.track] = (acc[a.track] || 0) + 1;
       return acc;
@@ -845,7 +839,6 @@ export const api = {
       byType,
       byTrack,
       evolution,
-      errorsByType,
       errorsByTrack,
       productivityByAnalyst,
       productivityByTrack
