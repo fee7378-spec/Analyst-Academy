@@ -688,13 +688,6 @@ export const api = {
     }, {} as Record<string, number>);
     const byStatus = Object.entries(byStatusMap).map(([status, count]) => ({ status, count }));
 
-    const byTypeMap = filtered.reduce((acc, a) => {
-      const type = a.demand_type || 'Desconhecido';
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    const byType = Object.entries(byTypeMap).map(([demand_type, count]) => ({ demand_type, count }));
-
     const byTrackMap = filtered.reduce((acc, a) => {
       const trackName = a.track || 'Desconhecido';
       acc[trackName] = (acc[trackName] || 0) + 1;
@@ -836,7 +829,6 @@ export const api = {
     return {
       totalAnalyses: { count: filtered.length },
       byStatus,
-      byType,
       byTrack,
       evolution,
       errorsByTrack,

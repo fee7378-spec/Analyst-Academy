@@ -72,7 +72,6 @@ export interface ActivityLog {
 export interface DashboardData {
   totalAnalyses: { count: number };
   byStatus: { status: string; count: number }[];
-  byType: { demand_type: string; count: number }[];
   byTrack: { track: string; count: number }[];
   evolution: { week: string; count: number; errors: number }[];
   errorsByTag: { tag: string; count: number }[];
