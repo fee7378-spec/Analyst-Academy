@@ -356,6 +356,23 @@ export const api = {
   },
 
   async deleteAnalyst(id: number) {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      try {
+        const latestUser = await this.getUser(user.id);
+        const permissions = latestUser.permissions || {};
+        const canEdit = latestUser.role === 'Administrador' || permissions['analistas'] === 'edit';
+        if (!canEdit) {
+           throw new Error('Você não tem permissão para realizar esta ação');
+        }
+      } catch (err: any) {
+        if (err.message === 'Você não tem permissão para realizar esta ação') {
+          throw err;
+        }
+      }
+    }
+
     const snapshot = await get(ref(db, 'analysts'));
     if (!snapshot.exists()) return { success: true };
     

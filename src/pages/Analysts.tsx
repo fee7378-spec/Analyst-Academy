@@ -18,7 +18,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Award,
-  FileText
+  FileText,
+  FilterX,
+  X
 } from 'lucide-react';
 import { formatLocalDate, getTodayForInput } from '../utils/date';
 import { motion, AnimatePresence } from 'motion/react';
@@ -53,6 +55,7 @@ export const Analysts: React.FC = () => {
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTrackFilter, setSelectedTrackFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [selectedAnalyst, setSelectedAnalyst] = useState<User | null>(null);
@@ -141,6 +144,18 @@ export const Analysts: React.FC = () => {
       toast.error('Você não tem permissão para realizar esta ação');
       return;
     }
+    
+    // Check for duplicates
+    const isDuplicate = analysts.some(a => 
+      (a.name === formData.name || a.matricula === formData.matricula) && 
+      (!editingAnalyst || a.id !== editingAnalyst.id)
+    );
+
+    if (isDuplicate) {
+      toast.error('Já existe um analista com este nome ou login');
+      return;
+    }
+
     setSaving(true);
     try {
       if (editingAnalyst) {
@@ -307,8 +322,10 @@ export const Analysts: React.FC = () => {
 
   const filteredAnalysts = Array.isArray(analysts) ? analysts.filter(a => {
     const search = (searchTerm || '').toLowerCase();
-    return (a.name || '').toLowerCase().includes(search) || 
+    const searchMatch = (a.name || '').toLowerCase().includes(search) || 
            (a.matricula || '').toLowerCase().includes(search);
+    const trackMatch = selectedTrackFilter ? a.esteira === selectedTrackFilter : true;
+    return searchMatch && trackMatch;
   }) : [];
 
   return (
@@ -348,6 +365,30 @@ export const Analysts: React.FC = () => {
             className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
           />
         </div>
+        <div className="relative w-64 shrink-0">
+          <select
+            value={selectedTrackFilter}
+            onChange={(e) => setSelectedTrackFilter(e.target.value)}
+            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white appearance-none"
+          >
+            <option value="">Todas as Esteiras</option>
+            {tracks.map(t => (
+              <option key={t.id} value={t.name}>{t.name}</option>
+            ))}
+          </select>
+        </div>
+        {(searchTerm || selectedTrackFilter) && (
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setSelectedTrackFilter('');
+            }}
+            className="px-4 py-2 text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all flex items-center gap-2 shrink-0"
+          >
+            <FilterX className="w-4 h-4" />
+            Limpar Filtros
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
