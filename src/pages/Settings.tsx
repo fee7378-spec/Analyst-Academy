@@ -30,19 +30,21 @@ export const Settings: React.FC = () => {
 
   const systemItems = [
     { id: 'perfil', label: 'Meu Perfil', path: '/configuracoes/perfil', icon: Globe },
-    { id: 'processamento', label: 'Processamento', path: '/configuracoes/processamento', icon: FileSpreadsheet },
-    { id: 'logs', label: 'Logs', path: '/configuracoes/logs', icon: ClipboardList }
+    { id: 'segmento', label: 'Segmento', path: '/configuracoes/segmento', icon: Layers }
   ];
 
   const advancedItems = [
     { id: 'perfis', label: 'Perfis de Acesso', path: '/configuracoes/perfis', icon: Shield },
-    { id: 'segmento', label: 'Segmento', path: '/configuracoes/segmento', icon: Layers } // Just using layers or settings icon
+    { id: 'processamento', label: 'Processamento', path: '/configuracoes/processamento', icon: FileSpreadsheet },
+    { id: 'logs', label: 'Logs', path: '/configuracoes/logs', icon: ClipboardList }
   ];
 
-  const visibleSystemItems = systemItems.filter(item => hasAccess(item.id as keyof UserPermissions));
-  // Note: we might need to assume 'segmento' acts as 'perfis' permission or Administrator only
+  const visibleSystemItems = systemItems.filter(item => {
+    if (item.id === 'perfil' || item.id === 'segmento') return true;
+    return hasAccess(item.id as keyof UserPermissions);
+  });
+  
   const visibleAdvancedItems = advancedItems.filter(item => {
-    if (item.id === 'segmento') return isServer; // only admin? or let's make it everyone who can access settings or admin
     return hasAccess(item.id as keyof UserPermissions);
   });
 
