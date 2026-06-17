@@ -114,7 +114,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     cnpj: '',
     treatment_date: getTodayForInput(),
     demand_number: '',
-    demand_type: DEMAND_TYPES[0],
+    demand_type: '',
     track: '',
     status: 'Não' as AnalysisStatus,
     status_observation: '',
@@ -201,7 +201,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
       cnpj: '',
       treatment_date: getTodayForInput(),
       demand_number: '',
-      demand_type: DEMAND_TYPES[0],
+      demand_type: '',
       track: '',
       status: 'Não',
       status_observation: '',
@@ -250,17 +250,26 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     }
   };
 
-  const formatCNPJ = (value: string) => {
+  const segment = localStorage.getItem('segment') || 'PJ';
+
+  const formatDocument = (value: string) => {
     let clean = value.replace(/\D/g, '');
-    if (clean.length > 14) clean = clean.slice(0, 14);
-    
-    let masked = clean;
-    if (clean.length > 2) masked = clean.slice(0, 2) + '.' + clean.slice(2);
-    if (clean.length > 5) masked = masked.slice(0, 6) + '.' + masked.slice(6);
-    if (clean.length > 8) masked = masked.slice(0, 10) + '/' + masked.slice(10);
-    if (clean.length > 12) masked = masked.slice(0, 15) + '-' + masked.slice(15);
-    
-    return masked;
+    if (segment === 'PF') {
+      if (clean.length > 11) clean = clean.slice(0, 11);
+      let masked = clean;
+      if (clean.length > 3) masked = clean.slice(0, 3) + '.' + clean.slice(3);
+      if (clean.length > 6) masked = masked.slice(0, 7) + '.' + masked.slice(7);
+      if (clean.length > 9) masked = masked.slice(0, 11) + '-' + masked.slice(11);
+      return masked;
+    } else {
+      if (clean.length > 14) clean = clean.slice(0, 14);
+      let masked = clean;
+      if (clean.length > 2) masked = clean.slice(0, 2) + '.' + clean.slice(2);
+      if (clean.length > 5) masked = masked.slice(0, 6) + '.' + masked.slice(6);
+      if (clean.length > 8) masked = masked.slice(0, 10) + '/' + masked.slice(10);
+      if (clean.length > 12) masked = masked.slice(0, 15) + '-' + masked.slice(15);
+      return masked;
+    }
   };
 
   const parseCSVDate = (dateStr: string) => {
@@ -299,15 +308,19 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     return dateStr;
   };
 
-  const validateCNPJ = (cnpj: string) => {
-    const clean = cnpj.replace(/\D/g, '');
-    if (clean.length !== 14) return false;
-    // Simple regex for format validation
-    return /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(cnpj);
+  const validateDocument = (doc: string) => {
+    const clean = doc.replace(/\D/g, '');
+    if (segment === 'PF') {
+      if (clean.length !== 11) return false;
+      return /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(doc);
+    } else {
+      if (clean.length !== 14) return false;
+      return /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(doc);
+    }
   };
 
-  const handleCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const masked = formatCNPJ(e.target.value);
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const masked = formatDocument(e.target.value);
     setFormData({...formData, cnpj: masked});
   };
 
@@ -319,7 +332,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
       }
 
       const headers = [
-        'Esteira', 'Demanda', 'Tipo de Demanda', 'Empresa', 'CNPJ', 
+        'Esteira', 'Demanda', 'Tipo de Demanda', segment === 'PF' ? 'Nome' : 'Empresa', segment === 'PF' ? 'CPF' : 'CNPJ', 
         'Analista', 'Login do Analista', 'Data', 'Erro', 'Observação do Erro', 
         'Tag', 'Monitor'
       ];
@@ -373,14 +386,14 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
 
   const downloadTemplate = () => {
     const headers = [
-      'Esteira', 'Demanda', 'Tipo de Demanda', 'Empresa', 'CNPJ', 
+      'Esteira', 'Demanda', 'Tipo de Demanda', segment === 'PF' ? 'Nome' : 'Empresa', segment === 'PF' ? 'CPF' : 'CNPJ', 
       'Analista', 'Login do Analista', 'Data', 'Erro', 'Observação do Erro', 
       'Tag'
     ];
     
     // Example row
     const example = [
-      'Extranet', '123456', 'Abertura de conta', 'Empresa Exemplo', '12.345.678/0001-90',
+      'Extranet', '123456', 'Abertura de conta', 'Empresa Exemplo', segment === 'PF' ? '000.000.000-00' : '12.345.678/0001-90',
       'Nome do Analista', 'login.analista', format(new Date(), 'dd/MM/yyyy'), 'Não', '',
       ''
     ];
@@ -463,8 +476,8 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 track: row['Esteira'],
                 demand_number: row['Demanda'],
                 demand_type: row['Tipo de Demanda'] || 'Outro',
-                company_name: row['Empresa'] || '',
-                cnpj: formatCNPJ(row['CNPJ'] || ''),
+                company_name: row['Empresa'] || row['Nome'] || '',
+                cnpj: formatDocument(row['CNPJ'] || row['CPF'] || ''),
                 analyst_id: analyst.id.toString(),
                 treatment_date: parseCSVDate(row['Data']),
                 status: row['Erro'] === 'Sim' ? 'Sim' : 'Não',
@@ -578,10 +591,13 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   let currentDemandTypes = currentTrackConfig.demandTypes?.length > 0 ? currentTrackConfig.demandTypes : DEMAND_TYPES;
   if (selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura') {
     currentDemandTypes = ['Abertura de conta'];
+  } else if (selectedTrack === 'Fatca') {
+    currentDemandTypes = ['Fatca'];
   } else {
     currentDemandTypes = currentDemandTypes.filter(type => type !== 'Abertura de conta');
   }
-  const currentTags = currentTrackConfig.tags?.length > 0 ? currentTrackConfig.tags : TAGS;
+  const initialPfTags = ['Aprovação indevida', 'Reprovação indevida', 'Dados divergentes', 'Interação Salesforce', 'Falha na análise', 'Tabulação', 'Procedimento incorreto e/ou incompleto.'];
+  const currentTags = segment === 'PF' ? initialPfTags : (currentTrackConfig.tags?.length > 0 ? currentTrackConfig.tags : TAGS);
 
   return (
     <div className="space-y-6">
@@ -634,13 +650,19 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     let currentDemandTypes = track.formConfig?.demandTypes?.length > 0 ? track.formConfig.demandTypes : DEMAND_TYPES;
                     if (track.name === 'Abertura PJ' || track.name === 'BKO Abertura') {
                       currentDemandTypes = ['Abertura de conta'];
+                    } else if (track.name === 'Fatca') {
+                      currentDemandTypes = ['Fatca'];
                     } else {
                       currentDemandTypes = currentDemandTypes.filter((type: string) => type !== 'Abertura de conta');
                     }
                     
                     let demandType = formData.demand_type;
-                    if (!currentDemandTypes.includes(demandType)) {
-                      demandType = currentDemandTypes[0] || '';
+                    if (track.name === 'Abertura PJ' || track.name === 'BKO Abertura') {
+                        demandType = 'Abertura de conta';
+                    } else if (track.name === 'Fatca') {
+                        demandType = 'Fatca';
+                    } else {
+                        demandType = '';
                     }
 
                     setFormData({ ...formData, track: track.name, demand_type: demandType });
@@ -775,31 +797,31 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
 
                 {currentTrackConfig.showCompany && (
                   <div className="space-y-3">
-                    <label className="text-base font-bold text-slate-800 dark:text-slate-200">Razão Social</label>
+                    <label className="text-base font-bold text-slate-800 dark:text-slate-200">{segment === 'PF' ? 'Nome' : 'Razão Social'}</label>
                     <input 
                       required
                       type="text"
                       value={formData.company_name}
                       onChange={e => setFormData({...formData, company_name: e.target.value})}
                       className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
-                      placeholder="Nome da empresa"
+                      placeholder={segment === 'PF' ? 'Nome' : 'Nome da empresa'}
                     />
                   </div>
                 )}
 
                 {currentTrackConfig.showCnpj && (
                   <div className="space-y-3">
-                    <label className="text-base font-bold text-slate-800 dark:text-slate-200">CNPJ</label>
+                    <label className="text-base font-bold text-slate-800 dark:text-slate-200">{segment === 'PF' ? 'CPF' : 'CNPJ'}</label>
                     <input 
                       required
                       type="text"
                       value={formData.cnpj}
-                      onChange={handleCNPJChange}
-                      className={`w-full bg-slate-50 dark:bg-slate-800/50 border rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white ${formData.cnpj && !validateCNPJ(formData.cnpj) ? 'border-red-300 dark:border-red-500/50' : 'border-slate-200 dark:border-slate-700'}`}
-                      placeholder="00.000.000/0000-00"
+                      onChange={handleDocumentChange}
+                      className={`w-full bg-slate-50 dark:bg-slate-800/50 border rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white ${formData.cnpj && !validateDocument(formData.cnpj) ? 'border-red-300 dark:border-red-500/50' : 'border-slate-200 dark:border-slate-700'}`}
+                      placeholder={segment === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
                     />
-                    {formData.cnpj && !validateCNPJ(formData.cnpj) && (
-                      <p className="text-xs text-red-500 dark:text-red-400 font-semibold">Formato de CNPJ inválido</p>
+                    {formData.cnpj && !validateDocument(formData.cnpj) && (
+                      <p className="text-xs text-red-500 dark:text-red-400 font-semibold">{segment === 'PF' ? 'Formato de CPF inválido' : 'Formato de CNPJ inválido'}</p>
                     )}
                   </div>
                 )}
@@ -835,11 +857,11 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 {currentTrackConfig.showDemandType && (
                   <div className="space-y-3">
                     <label className="text-base font-bold text-slate-800 dark:text-slate-200">
-                      Tipo de Demanda {(selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura') && <span className="text-xs font-normal text-blue-500 ml-2">(Fixo para esta esteira)</span>}
+                      Tipo de Demanda {(selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura' || selectedTrack === 'Fatca') && <span className="text-xs font-normal text-blue-500 ml-2">(Fixo para esta esteira)</span>}
                     </label>
                     <select 
                       required
-                      disabled={selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura'}
+                      disabled={selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura' || selectedTrack === 'Fatca'}
                       value={formData.demand_type}
                       onChange={e => {
                         const val = e.target.value;
@@ -847,13 +869,14 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                         setIsOtherDemandType(val === 'Outro');
                       }}
                       className={`w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white ${
-                        (selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura') ? 'opacity-75 cursor-not-allowed' : ''
+                        (selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura' || selectedTrack === 'Fatca') ? 'opacity-75 cursor-not-allowed' : ''
                       }`}
                     >
+                      <option value="" disabled className="dark:bg-slate-900 text-slate-400">Selecione o Tipo de demanda</option>
                       {currentDemandTypes.map(type => (
                         <option key={type} value={type} className="dark:bg-slate-900">{type}</option>
                       ))}
-                      {selectedTrack !== 'Abertura PJ' && selectedTrack !== 'BKO Abertura' && (
+                      {selectedTrack !== 'Abertura PJ' && selectedTrack !== 'BKO Abertura' && selectedTrack !== 'Fatca' && (
                         <option value="Outro" className="dark:bg-slate-900">Outro</option>
                       )}
                     </select>
@@ -1060,7 +1083,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                       <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Esteira / Demanda</th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Empresa / CNPJ</th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{segment === 'PF' ? 'Nome / CPF' : 'Empresa / CNPJ'}</th>
                       <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Analista</th>
                       <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Data</th>
                       <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Erro</th>
@@ -1203,12 +1226,12 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     <h3 className="font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Dados do Cliente</h3>
                     
                     <div>
-                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block">Empresa</span>
+                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block">{segment === 'PF' ? 'Nome' : 'Empresa'}</span>
                       <span className="text-slate-900 dark:text-white">{viewingAnalysis.company_name}</span>
                     </div>
                     
                     <div>
-                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block">CNPJ</span>
+                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block">{segment === 'PF' ? 'CPF' : 'CNPJ'}</span>
                       <span className="text-slate-900 dark:text-white">{viewingAnalysis.cnpj}</span>
                     </div>
                   </div>

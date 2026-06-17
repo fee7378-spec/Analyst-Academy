@@ -116,21 +116,15 @@ export const Profile: React.FC = () => {
           <div className="bg-slate-900 p-6 rounded-3xl shadow-lg text-white">
             <h3 className="font-bold mb-4 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-blue-400" />
-              Status da Conta
+              Informações
             </h3>
             <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-400">E-mail</span>
-                <span className="font-medium truncate max-w-[150px]" title={user.email}>{user.email || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-400">Cadastro</span>
-                <span className="font-medium">{user.created_at ? format(new Date(user.created_at), 'dd/MM/yyyy') : 'N/A'}</span>
-              </div>
-              <div className="pt-4 border-t border-slate-800">
-                <p className="text-xs text-slate-500 italic">
-                  Sua conta é monitorada para fins de segurança e rastreabilidade. Para alterar seus dados ou permissões, contate um Administrador.
-                </p>
+              <div className="flex justify-between text-sm items-center">
+                <span className="text-slate-400 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Último Acesso
+                </span>
+                <span className="font-medium text-slate-300">{lastSignIn || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -176,52 +170,6 @@ export const Profile: React.FC = () => {
                   <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma atividade recente registrada.</p>
                 </div>
               )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
-                <Key className="w-5 h-5 text-emerald-500" />
-                Segurança
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-slate-400" />
-                    <span className="text-xs font-medium text-slate-500">Último Acesso</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{lastSignIn || 'N/A'}</span>
-                </div>
-                <button
-                  onClick={handleResetPassword}
-                  disabled={isResetting}
-                  className="w-full py-3 px-4 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50"
-                >
-                  {isResetting ? 'Enviando...' : 'Redefinir Senha'}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
-                <Briefcase className="w-5 h-5 text-blue-500" />
-                Profissional
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">Matrícula</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-300">{user.matricula}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">Esteira</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-300">{user.esteira || 'N/A'}</span>
-                </div>
-                <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-blue-500">
-                  <Users className="w-4 h-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider">{user.role}</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>

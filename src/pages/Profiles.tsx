@@ -261,30 +261,32 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {templates.map(template => (
-          <div key={template.id} className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
-            <div className="flex justify-between items-start mb-4">
+          <div key={template.id} className="bg-white dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-700/50">
+            <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-bold text-lg text-slate-900 dark:text-white">{template.name}</h3>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">{template.name}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{template.description}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3 ml-4">
                 <button
                   onClick={() => setSelectedTemplate(template)}
-                  className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                  className="text-blue-500 hover:text-blue-400 transition-colors"
+                  title="Editar"
                 >
                   {canEdit ? <Pencil className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
                 {canEdit && (
                   <button
                     onClick={() => handleDeleteTemplate(template)}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="text-red-500 hover:text-red-400 transition-colors"
+                    title="Excluir"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
-            <div className="text-sm text-slate-600 dark:text-slate-300">
+            <div className="mt-6 text-sm font-medium text-slate-600 dark:text-slate-300 space-y-1">
               <p>Módulos com edição: {Object.values(template.permissions).filter(p => p === 'edit').length}</p>
               <p>Módulos com visualização: {Object.values(template.permissions).filter(p => p === 'view').length}</p>
             </div>
@@ -720,18 +722,13 @@ export const Profiles: React.FC = () => {
                               <Shield className="w-3 h-3" />
                               {user.role}
                             </span>
-                            {!user.templateId && (
-                              <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-purple-200 dark:border-purple-800">
-                                Customizado
-                              </span>
-                            )}
-                          </div>
+                            </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-1">
                             {Object.values(user.permissions || {}).filter(p => p !== 'none').length > 0 ? (
                               <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                                {Object.values(user.permissions || {}).filter(p => p !== 'none').length} permissões ativas
+                                {Object.values(user.permissions || {}).filter(p => p !== 'none').length} ativas
                               </span>
                             ) : (
                               <span className="text-xs text-slate-400 dark:text-slate-600 italic">Nenhuma permissão</span>
@@ -813,31 +810,31 @@ export const Profiles: React.FC = () => {
                       <span className="text-slate-500 dark:text-slate-400 font-medium">{selectedUser.email}</span>
                       <span className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Perfil:</span>
-                        <select 
-                          disabled={!canEdit}
-                          value={selectedUser.role}
-                          onChange={(e) => {
-                            const newRole = e.target.value;
-                            const template = templates.find(t => t.name === newRole);
-                            setSelectedUser({
-                              ...selectedUser,
-                              role: newRole as any,
-                              templateId: template ? template.id : undefined,
-                              permissions: template ? { ...template.permissions } : { ...TEMPLATES['Monitor'] }
-                            });
-                          }}
-                          className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
-                        >
-                          {templates.map(t => (
-                            <option key={t.id} value={t.name}>{t.name}</option>
-                          ))}
-                        </select>
-                        {!selectedUser.templateId && (
-                          <span className="ml-2 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-purple-200 dark:border-purple-800">
-                            Customizado
-                          </span>
-                        )}
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">PERFIL:</span>
+                        <div className="relative inline-flex items-center">
+                          <select 
+                            disabled={!canEdit}
+                            value={selectedUser.role}
+                            onChange={(e) => {
+                              const newRole = e.target.value;
+                              const template = templates.find(t => t.name === newRole);
+                              setSelectedUser({
+                                ...selectedUser,
+                                role: newRole as any,
+                                templateId: template ? template.id : undefined,
+                                permissions: template ? { ...template.permissions } : { ...TEMPLATES['Monitor'] }
+                              });
+                            }}
+                            className="appearance-none bg-transparent border border-slate-300 dark:border-slate-700 text-blue-500 dark:text-blue-400 rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                          >
+                            {templates.map(t => (
+                              <option key={t.id} value={t.name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{t.name}</option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1073,12 +1070,7 @@ export const Profiles: React.FC = () => {
                       <p className="text-xs text-slate-500 dark:text-slate-400 italic">
                         Perfil: {newUserForm.role}
                       </p>
-                      {!newUserForm.templateId && (
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-purple-200 dark:border-purple-800">
-                          Customizado
-                        </span>
-                      )}
-                    </div>
+                      </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

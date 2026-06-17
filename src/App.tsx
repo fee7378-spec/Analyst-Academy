@@ -11,6 +11,8 @@ import { Logs } from './pages/Logs';
 import { Profile } from './pages/Profile';
 import { Profiles } from './pages/Profiles';
 import { DataProcessing } from './pages/DataProcessing';
+import { Settings } from './pages/Settings';
+import { Segment } from './pages/Segment';
 
 export default function App() {
   React.useEffect(() => {
@@ -41,10 +43,14 @@ export default function App() {
           <Route path="/historico" element={<Analyses mode="list" />} />
           <Route path="/analistas" element={<Analysts />} />
           <Route path="/esteiras" element={<Tracks />} />
-          <Route path="/logs" element={<Logs />} />
-          <Route path="/perfis" element={<Profiles />} />
-          <Route path="/perfil" element={<Profile />} />
-          <Route path="/processamento" element={<DataProcessing />} />
+
+          <Route path="/configuracoes/*" element={<Settings />}>
+            <Route path="perfil" element={<Profile />} />
+            <Route path="processamento" element={<DataProcessing />} />
+            <Route path="logs" element={<Logs />} />
+            <Route path="perfis" element={<Profiles />} />
+            <Route path="segmento" element={<Segment />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

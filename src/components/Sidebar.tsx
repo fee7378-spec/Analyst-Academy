@@ -12,7 +12,8 @@ import {
   Shield,
   Layers,
   Plus,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Settings
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -43,11 +44,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ user }) => {
     { icon: Layers, label: 'Esteiras', path: '/esteiras', id: 'esteiras' },
     { icon: Users, label: 'Analistas', path: '/analistas', id: 'analistas' },
     { icon: History, label: 'Histórico', path: '/historico', id: 'historico' },
-    { icon: FileSpreadsheet, label: 'Processamento', path: '/processamento', id: 'processamento' },
-    { icon: ClipboardList, label: 'Logs', path: '/logs', id: 'logs' },
-    { icon: Shield, label: 'Perfis de acesso', path: '/perfis', id: 'perfis' },
-    { icon: UserCircle, label: 'Meu Perfil', path: '/perfil', id: 'perfil' },
+    // Removed specific settings options from here
   ];
+
+  const hasSettingsAccess = user.role === 'Administrador' || ['perfil', 'perfis', 'logs', 'processamento'].some(
+    p => permissions[p as keyof UserPermissions] === 'view' || permissions[p as keyof UserPermissions] === 'edit'
+  );
 
   const visibleItems = menuItems.filter(item => {
     if (user.role === 'Administrador') return true;
@@ -80,14 +82,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ user }) => {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-slate-800 space-y-2">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 w-full text-left text-slate-400 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-all duration-200"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Sair</span>
-        </button>
+      <div className="border-t border-slate-800 p-4">
+        <div className="flex items-center gap-3 mb-4 px-2">
+          <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold uppercase shrink-0">
+            {user.name.charAt(0)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white truncate">{user.name}</p>
+            <p className="text-xs text-slate-400 truncate">{user.email}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex px-2 py-1 text-[10px] font-bold bg-slate-800 text-slate-300 rounded border border-slate-700 select-none">
+            {localStorage.getItem('segment') || 'PJ'}
+          </div>
+          <div className="flex items-center gap-1">
+            {hasSettingsAccess && (
+              <NavLink
+                to="/configuracoes"
+                className={({ isActive }) => cn(
+                  "p-2 rounded-lg transition-colors",
+                  isActive ? "bg-blue-500/20 text-blue-400" : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                )}
+                title="Configurações"
+              >
+                <Settings className="w-4 h-4" />
+              </NavLink>
+            )}
+            <button
+              onClick={handleLogout}
+              title="Sair"
+              className="p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </aside>
   );

@@ -3,6 +3,23 @@ import { db, auth, logsDb, ref, get, set, update, remove, push } from './firebas
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
 import { DEMAND_TYPES, TAGS } from '../constants';
 
+export function getPath(basePath: string) {
+  if (typeof window !== 'undefined') {
+    const segment = localStorage.getItem('segment') || 'PJ';
+    if (
+      basePath === 'users' || basePath.startsWith('users/') ||
+      basePath === 'templates' || basePath.startsWith('templates/')
+    ) {
+      return basePath;
+    }
+    if (basePath === 'counters/users' || basePath === 'counters/templates') {
+      return basePath;
+    }
+    return segment === 'PF' ? `pf_${basePath}` : basePath;
+  }
+  return basePath;
+}
+
 export const normalizeString = (str: string) => {
   if (!str) return '';
   return str
@@ -37,7 +54,7 @@ const ADMIN_PERMISSIONS = {
 const initDb = async () => {
   try {
     // Initialize Admin User
-    const usersRef = ref(db, 'users');
+    const usersRef = ref(db, getPath('users'));
     const usersSnapshot = await get(usersRef);
     if (!usersSnapshot.exists()) {
       const adminUser = {
@@ -55,8 +72,8 @@ const initDb = async () => {
       await set(newRef, adminUser);
     }
 
-    // Initialize Default Tracks
-    const tracksRef = ref(db, 'tracks');
+    // Initialize Default Tracks (Only for PJ initially)
+    const tracksRef = ref(db, 'tracks'); // explicitly 'tracks' not getPath('tracks') to avoid seeding PF
     const tracksSnapshot = await get(tracksRef);
     if (!tracksSnapshot.exists()) {
       const tracksToCreate = [
@@ -100,6 +117,84 @@ const initDb = async () => {
         });
       }
     }
+
+    // Initialize Default Tracks for PF
+    const pfTracksRef = ref(db, 'pf_tracks');
+    const pfMetaRef = ref(db, 'pf_meta_version');
+    const pfMetaSnapshot = await get(pfMetaRef);
+    const PF_VERSION = '1.0.2'; // Increment this to force re-creation
+    
+    if (pfMetaSnapshot.val() !== PF_VERSION) {
+      // Remove existing explicitly if we are re-creating
+      const pfTracksSnapshot = await get(pfTracksRef);
+      if (pfTracksSnapshot.exists()) {
+        await remove(pfTracksRef);
+      }
+      
+      const pfTracksToCreate = [
+        { 
+          name: 'Abertura PF', icon: 'FilePlus',
+          demands: [
+            'Task Less - Análise de Dados Complementares - Fatca', 'Task Less - Análise de Dados complementares - Cart Adm', 'Task Less - Análise ID (Maior Conjunta)', 'Task Less - Análise ID (Maior Individual)', 'Task Less - Análise ID (Menor Conjunta)', 'Task Less - Análise ID (Menor Individual)', 'Task Less - Análise ID + Dados complementares Vintage (curatela)', 'Task Less - Análise ID + Dados Complementares Vintage (Interdito)', 'Task Less - Análise ID (Menor com Representante)', 'Task Less - Análise ID (Maior com Representante)', 'Ajuste de Conta (Com bloqueio total e ativa a menos de 30 dias)', 'Erros de WorkFlow', 'Lembrete', 'Outra', 'Task Less – Onboarding Unificado Kids', 'Baixa de Documentos PF'
+          ]
+        },
+        { 
+          name: 'Manutenção PF', icon: 'Wrench',
+          demands: [
+            'Login Terceiros Criação', 'Login Terceiros Alteração', 'Login Terceiros Inativação e Exclusão de acesso', 'Report B3 (Cad Complementar)', 'Extranet Atualização', 'Extranet Liberação de termo', 'Task Less - Validação Manual de representante', 'Task Less - Aprovação de Nome', 'Task Less - documento Digital', 'Liberação de Termo', 'Encerramento de Conta', 'Contas Transferidas (Acervo)', 'Inclusão/Exclusão de Mercado', 'Inclusão Exclusão de Mercado Home Broker', 'Portal Previdência', 'Solicitação de Documentos', 'Erros Cetip (Cad Complementar)', 'Inclusão de relacionamento Complexo', 'Inclusão de Relacionamento Simples', 'Alter de segmento', 'Alterar Officer', 'Task FATCA - Revisão', 'Outra', 'Baixa de Documentos', 'Task Less – Validação Manual de Avalista', 'Revisão Cadastral – AM Gestor', 'Revisão Cadastral – AM Distribuição', 'Revisão Cadastral – AM Pactual', 'Revisão Cadastral – BRK', 'Revisão Cadastral – IB Advisors', 'Revisão Cadastral – IB B2B', 'Revisão Cadastral – IB B2C', 'Revisão Cadastral – Corban Amploan', 'Revisão Cadastral – IB Pactual', 'Revisão Cadastral – GRP', 'Revisão Cadastral – WM', 'Task Less – Revisão Cadastral – AM Gestor', 'Task Less – Revisão Cadastral – AM Distribuição', 'Task Less – Revisão Cadastral – AM Pactual', 'Task Less – Revisão Cadastral – BRK', 'Task Less – Revisão Cadastral – IB Advisors', 'Task Less – Revisão Cadastral – IB B2B', 'Task Less – Revisão Cadastral – IB B2C', 'Task Less – Revisão Cadastral – Corban Amploan', 'Task Less – Revisão Cadastral – IB Pactual', 'Task Less – Revisão Cadastral – GRP', 'Task Less – Revisão Cadastral – WM', 'Alteração de E-mail/Telefone', 'Atualização de Dados Cadastrais', 'Atualização de Conta Menor x Maior', 'Baixa de Documentos Complexos', 'Cadastro de Procuração', 'Callback', 'Desbloqueio/Bloqueio de Conta', 'CREDFlow'
+          ]
+        },
+        { 
+          name: 'Manutenção PF - BKO', icon: 'Briefcase',
+          demands: [
+            'REVISÃO CADASTRAL', 'REVISÃO CADASTRAL VIA TASK', 'ALTERAÇÃO DE E-MAIL/TELEFONE', 'AJUSTE DE NOME', 'BAIXA DE DOCUMENTOS', 'ATUALIZAÇÃO DE CONTA MENOR/MAIOR', 'CADASTRO DE PROCURAÇÃO', 'CALLBACK', 'REMOÇÃO DE ACESSO GLOBAL', 'LOGIN TERCEIROS CRIAÇÃO', 'LOGIN TERCEIROS INATIVAÇÃO E EXCLUSÃO DE ACESSO', 'LIBERAÇÃO DE TERMO', 'ENCERRAMENTO DE CONTA', 'INCLUSÃO/EXCLUSÃO DE MERCADO HOME BROKER', 'SOLICITAÇÃO DE DOCUMENTOS', 'INCLUSÃO DE RELACIONAMENTO COMPLEXO', 'INCLUSÃO DE RELACIONAMENTO SIMPLES', 'CURATELA', 'BLOQUEIO E DESBLOQUEIO', 'DUVIDAS E SOLICITAÇÕES', 'OUTRA', 'REMOÇÃO DE PENDÊNCIA', 'KIPREV', 'ATUALIZAÇÃO DE DADOS CADASTRAIS', 'INVENTÁRIO', 'ALTERAÇÃO DE ESTEIRA BPO', 'PRIORIDADES GRUPO WM', 'ENCERRAMENTO ESPÓLIO', 'DISTRATO DE CART ADM', 'ALTERAÇÃO DE OFFICER', 'MIGRAÇÃO DE SEGMENTO', 'LOGIN TERCEIROS ALTERAÇÃO'
+          ]
+        },
+        { 
+          name: 'Abertura PF - BKO', icon: 'FilePlus',
+          demands: [
+            'CADASTRO CGE', 'SEGURO AGRO', 'ENFORCE (CGE)', 'DUVIDAS E SOLICITAÇÕES', 'DESBLOQUEIO', 'TASK LESS - ANALISE DE DADOS COMPLEMENTARES - FATCA', 'TASK LESS - ANALISE DE DADOS COMPLEMENTARES - CART ADM', 'TASK LESS - ANALISE DE DADOS COMPLEMENTARES - ANALISE DE DADOS FINANCEIROS', 'TASK LESS - ANALISE ID (MENOR CONJUNTA)', 'TASK LESS - ANALISE ID (MENOR INDIVIDUAL)', 'TASK LESS - ANALISE ID + DADOS COMPLEMENTARES CINTAGE (INTERDITO)', 'TASK LESS - ANALISE ID (MENOR REPRESENTANTE)', 'TASK LESS - ANALISE ID (MAIOR REPRESENTANTE)', 'TASK LESS - ANALISE ID (MAIOR CONJUNTA)', 'TASK LESS - ANALISE ID (MAIOR INDIVIDUAL)', 'AJUSTE DE CONTA (COM BLOQUEIO TOTAL E ATIVA A MENOS DE 30 DIAS)', 'LEMBRTE', 'ERRO DE WORKFLOW', 'OUTRA', 'PRIORIDADES GRUPO WM', 'APROVAÇÃO DE PROCURAÇÃO', 'AJUSTE PORTAL ADMIN'
+          ]
+        },
+        { 
+          name: 'Vintage PF', icon: 'Star',
+          demands: [
+            'Abertura I - Carteira Adm (Espelho)', 'Abertura WM', 'Abertura WM - Carteira Adm (Espelho)', 'Abertura Op tin', 'Abertura Contas Transferidas Entuba', 'Criação CGE Parceiro', 'Desbloqueio/Criação de acesso (Conta com bloqueio Total)', 'Abertura Espólio', 'Abertura Alternative Funds Inventário com marcação escritural', 'Abertura Ações Escriturais', 'Abertura Inventário', 'Abertura Conta Cotizada', 'Abertura Extranet/Distribuição', 'Abertura Alternative Funds', 'Abertura Fundos Escriturais', 'Abertura IB GRP', 'Abertura IB ADVISOR', 'Abertura IB B2C', 'Abertura IB B2B', 'Conta Vinculada', 'Abertura IB PACTUAL (CORPORATE)', 'Abertura BRK', 'Outra', 'Abertura Ações Escriturais Funds Service', 'Abertura IB Pactual (Corretora)', 'CREDFlow', 'Ajuste de Dados Portal Admin', 'Cadastro CGE – Novos Acessos', 'Enforce (CGE)'
+          ]
+        },
+        { 
+          name: 'Fatca', icon: 'Globe',
+          demands: [ 'Fatca' ]
+        }
+      ];
+
+      for (const trackInfo of pfTracksToCreate) {
+        const newTrackRef = push(pfTracksRef);
+        await set(newTrackRef, {
+          id: newTrackRef.key,
+          name: trackInfo.name,
+          icon: trackInfo.icon,
+          active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          formConfig: {
+            showAnalyst: true,
+            showCompany: true,
+            showCnpj: true,
+            showDate: true,
+            showDemandNumber: true,
+            showDemandType: true,
+            showObservation: true,
+            showStatus: true,
+            showStatusObservation: true,
+            showTag: true,
+            demandTypes: trackInfo.demands,
+            tags: ['Aprovação indevida', 'Reprovação indevida', 'Dados divergentes', 'Interação Salesforce', 'Falha na análise', 'Tabulação', 'Procedimento incorreto e/ou incompleto.']
+          }
+        });
+      }
+      await set(pfMetaRef, PF_VERSION);
+    }
   } catch (e) {
     console.error("Error initializing DB:", e);
   }
@@ -111,7 +206,7 @@ const logAction = async (action: string, details: string) => {
   try {
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
-    const logsRef = ref(logsDb, 'logs');
+    const logsRef = ref(logsDb, getPath('logs'));
     const newLogRef = push(logsRef);
     await set(newLogRef, {
       id: Date.now(),
@@ -128,7 +223,7 @@ const logAction = async (action: string, details: string) => {
 };
 
 const getNextId = async (counterName: string): Promise<number> => {
-  const counterRef = ref(db, `counters/${counterName}`);
+  const counterRef = ref(db, getPath(`counters/${counterName}`));
   const snapshot = await get(counterRef);
   let currentId = snapshot.exists() ? snapshot.val() : 1;
   if (counterName === 'users' && !snapshot.exists()) {
@@ -138,9 +233,10 @@ const getNextId = async (counterName: string): Promise<number> => {
   return currentId;
 };
 
+
 export const api = {
   async checkEmail(identifier: string) {
-    const usersRef = ref(db, 'users');
+    const usersRef = ref(db, getPath('users'));
     const snapshot = await get(usersRef);
     if (!snapshot.exists()) throw new Error('Usuário não encontrado');
     
@@ -161,7 +257,7 @@ export const api = {
   },
 
   async setPassword(identifier: string, password: string) {
-    const usersRef = ref(db, 'users');
+    const usersRef = ref(db, getPath('users'));
     const snapshot = await get(usersRef);
     if (!snapshot.exists()) throw new Error('Usuário não encontrado');
     
@@ -188,7 +284,7 @@ export const api = {
       if (error.code === 'auth/email-already-in-use') {
         // Update database to reflect that the user is already set up, and store the new password
         // since we can't change it in Firebase Auth from the client.
-        await update(ref(db, `users/${userKey}`), { is_first_access: false, password: password });
+        await update(ref(db, getPath(`users/${userKey}`)), { is_first_access: false, password: password });
         
         user.is_first_access = false;
         user.password = password;
@@ -202,7 +298,7 @@ export const api = {
     }
 
     user.is_first_access = false;
-    await update(ref(db, `users/${userKey}`), { is_first_access: false });
+    await update(ref(db, getPath(`users/${userKey}`)), { is_first_access: false });
     
     const token = await auth.currentUser?.getIdToken();
     localStorage.setItem('token', token || 'mock-token');
@@ -222,7 +318,7 @@ export const api = {
       throw new Error('Senha do administrador incorreta');
     }
 
-    const snapshot = await get(ref(db, 'users'));
+    const snapshot = await get(ref(db, getPath('users')));
     if (!snapshot.exists()) throw new Error('Usuário não encontrado');
     
     const usersObj = snapshot.val();
@@ -231,7 +327,7 @@ export const api = {
 
     const targetUser = usersObj[userKey];
     
-    await update(ref(db, `users/${userKey}`), { 
+    await update(ref(db, getPath(`users/${userKey}`)), { 
       password: 'Mudar@123',
       is_first_access: true
     });
@@ -253,7 +349,7 @@ export const api = {
     const normalizedId = identifier.toLowerCase().trim();
     
     // First, find the user in the database to get their actual email
-    const usersRef = ref(db, 'users');
+    const usersRef = ref(db, getPath('users'));
     const snapshot = await get(usersRef);
     let userData = null;
     let actualEmail = null;
@@ -303,7 +399,7 @@ export const api = {
           
           // Remove plaintext password from DB
           if (userKey) {
-            await update(ref(db, `users/${userKey}`), { password: null });
+            await update(ref(db, getPath(`users/${userKey}`)), { password: null });
           }
           
           localStorage.setItem('token', token);
@@ -323,7 +419,7 @@ export const api = {
   },
 
   async getAnalysts() {
-    const snapshot = await get(ref(db, 'analysts'));
+    const snapshot = await get(ref(db, getPath('analysts')));
     if (!snapshot.exists()) return [];
     return Object.values(snapshot.val()) as any[];
   },
@@ -336,21 +432,21 @@ export const api = {
       created_at: new Date().toISOString()
     };
     
-    const newRef = push(ref(db, 'analysts'));
+    const newRef = push(ref(db, getPath('analysts')));
     await set(newRef, newAnalyst);
     await logAction('Criar Analista', `Analista ${data.name} criado`);
     return newAnalyst;
   },
 
   async updateAnalyst(id: number, data: any) {
-    const snapshot = await get(ref(db, 'analysts'));
+    const snapshot = await get(ref(db, getPath('analysts')));
     if (!snapshot.exists()) throw new Error('Analista não encontrado');
     
     const analystsObj = snapshot.val();
     const analystKey = Object.keys(analystsObj).find(key => analystsObj[key].id === id);
     if (!analystKey) throw new Error('Analista não encontrado');
     
-    await update(ref(db, `analysts/${analystKey}`), data);
+    await update(ref(db, getPath(`analysts/${analystKey}`)), data);
     await logAction('Atualizar Analista', `Analista ID ${id} atualizado`);
     return { ...analystsObj[analystKey], ...data };
   },
@@ -373,20 +469,20 @@ export const api = {
       }
     }
 
-    const snapshot = await get(ref(db, 'analysts'));
+    const snapshot = await get(ref(db, getPath('analysts')));
     if (!snapshot.exists()) return { success: true };
     
     const analystsObj = snapshot.val();
     const analystKey = Object.keys(analystsObj).find(key => analystsObj[key].id === id);
     if (analystKey) {
-      await remove(ref(db, `analysts/${analystKey}`));
+      await remove(ref(db, getPath(`analysts/${analystKey}`)));
       await logAction('Excluir Analista', `Analista ID ${id} excluído`);
     }
     return { success: true };
   },
 
   async getAnalyst(id: number) {
-    const snapshot = await get(ref(db, 'analysts'));
+    const snapshot = await get(ref(db, getPath('analysts')));
     if (!snapshot.exists()) throw new Error('Analista não encontrado');
     const analystsObj = snapshot.val();
     const analyst = Object.values(analystsObj).find((u: any) => u.id === id);
@@ -395,13 +491,13 @@ export const api = {
   },
 
   async getAnalyses() {
-    const snapshot = await get(ref(db, 'analyses'));
+    const snapshot = await get(ref(db, getPath('analyses')));
     if (!snapshot.exists()) return [];
     return Object.values(snapshot.val());
   },
 
   async createAnalysis(data: any) {
-    const analystsSnapshot = await get(ref(db, 'analysts'));
+    const analystsSnapshot = await get(ref(db, getPath('analysts')));
     let analystName = '';
     let analystMatricula = '';
     
@@ -423,14 +519,14 @@ export const api = {
       created_at: new Date().toISOString()
     };
     
-    const newRef = push(ref(db, 'analyses'));
+    const newRef = push(ref(db, getPath('analyses')));
     await set(newRef, newAnalysis);
     await logAction('Criar Monitoria', `Monitoria ${data.demand_number} criada`);
     return newAnalysis;
   },
 
   async updateAnalysis(id: number, data: any) {
-    const snapshot = await get(ref(db, 'analyses'));
+    const snapshot = await get(ref(db, getPath('analyses')));
     if (!snapshot.exists()) throw new Error('Monitoria não encontrada');
     
     const analysesObj = snapshot.val();
@@ -438,7 +534,7 @@ export const api = {
     if (!analysisKey) throw new Error('Monitoria não encontrada');
     
     if (data.analyst_id) {
-      const analystsSnapshot = await get(ref(db, 'analysts'));
+      const analystsSnapshot = await get(ref(db, getPath('analysts')));
       if (analystsSnapshot.exists()) {
         const analysts = Object.values(analystsSnapshot.val()) as any[];
         const analyst = analysts.find(u => u.id === Number(data.analyst_id));
@@ -449,26 +545,26 @@ export const api = {
       }
     }
     
-    await update(ref(db, `analyses/${analysisKey}`), data);
+    await update(ref(db, getPath(`analyses/${analysisKey}`)), data);
     await logAction('Atualizar Monitoria', `Monitoria ID ${id} atualizada`);
     return { ...analysesObj[analysisKey], ...data };
   },
 
   async deleteAnalysis(id: number) {
-    const snapshot = await get(ref(db, 'analyses'));
+    const snapshot = await get(ref(db, getPath('analyses')));
     if (!snapshot.exists()) return { success: true };
     
     const analysesObj = snapshot.val();
     const analysisKey = Object.keys(analysesObj).find(key => analysesObj[key].id === id);
     if (analysisKey) {
-      await remove(ref(db, `analyses/${analysisKey}`));
+      await remove(ref(db, getPath(`analyses/${analysisKey}`)));
       await logAction('Excluir Monitoria', `Monitoria ID ${id} excluída`);
     }
     return { success: true };
   },
 
   async deleteAnalyses(period: string) {
-    const snapshot = await get(ref(db, 'analyses'));
+    const snapshot = await get(ref(db, getPath('analyses')));
     if (!snapshot.exists()) return { success: true };
     
     const analyses = snapshot.val();
@@ -496,14 +592,14 @@ export const api = {
     });
     
     if (Object.keys(updates).length > 0) {
-      await update(ref(db, 'analyses'), updates);
+      await update(ref(db, getPath('analyses')), updates);
       await logAction('Limpar Histórico', `Histórico de monitorias limpo (Período: ${period})`);
     }
     return { success: true };
   },
 
   async getLogs() {
-    const snapshot = await get(ref(logsDb, 'logs'));
+    const snapshot = await get(ref(logsDb, getPath('logs')));
     if (!snapshot.exists()) return [];
     const logs = Object.values(snapshot.val()) as any[];
     return logs.map(log => {
@@ -528,7 +624,7 @@ export const api = {
   },
 
   async deleteLogs(period: string) {
-    const snapshot = await get(ref(logsDb, 'logs'));
+    const snapshot = await get(ref(logsDb, getPath('logs')));
     if (!snapshot.exists()) return { success: true };
     
     const logs = snapshot.val();
@@ -556,20 +652,20 @@ export const api = {
     });
     
     if (Object.keys(updates).length > 0) {
-      await update(ref(logsDb, 'logs'), updates);
+      await update(ref(logsDb, getPath('logs')), updates);
     }
     return { success: true };
   },
 
   async getUsers() {
-    const snapshot = await get(ref(db, 'users'));
+    const snapshot = await get(ref(db, getPath('users')));
     if (!snapshot.exists()) return [];
     const users = Object.values(snapshot.val()) as any[];
     return users.map(({ password, ...u }) => u);
   },
 
   async getTemplates() {
-    const snapshot = await get(ref(db, 'templates'));
+    const snapshot = await get(ref(db, getPath('templates')));
     if (!snapshot.exists()) return [];
     return Object.values(snapshot.val()) as any[];
   },
@@ -577,16 +673,16 @@ export const api = {
   async createTemplate(templateData: any) {
     const id = Date.now().toString();
     const newTemplate = { ...templateData, id };
-    await set(ref(db, `templates/${id}`), newTemplate);
+    await set(ref(db, getPath(`templates/${id}`)), newTemplate);
     await logAction('Criar Template', `Template ${templateData.name} criado`);
     return newTemplate;
   },
 
   async updateTemplate(id: string, templateData: any) {
-    await update(ref(db, `templates/${id}`), templateData);
+    await update(ref(db, getPath(`templates/${id}`)), templateData);
     
     // Update all users that use this template
-    const usersSnapshot = await get(ref(db, 'users'));
+    const usersSnapshot = await get(ref(db, getPath('users')));
     if (usersSnapshot.exists()) {
       const users = usersSnapshot.val();
       const updates: any = {};
@@ -599,7 +695,7 @@ export const api = {
         }
       });
       if (Object.keys(updates).length > 0) {
-        await update(ref(db, 'users'), updates);
+        await update(ref(db, getPath('users')), updates);
       }
     }
     
@@ -608,13 +704,13 @@ export const api = {
   },
 
   async deleteTemplate(id: string) {
-    await remove(ref(db, `templates/${id}`));
+    await remove(ref(db, getPath(`templates/${id}`)));
     await logAction('Excluir Template', `Template ID ${id} excluído`);
     return { success: true };
   },
 
   async getUser(id: number) {
-    const snapshot = await get(ref(db, 'users'));
+    const snapshot = await get(ref(db, getPath('users')));
     if (!snapshot.exists()) throw new Error('Usuário não encontrado');
     const usersObj = snapshot.val();
     const user = Object.values(usersObj).find((u: any) => u.id === id);
@@ -624,7 +720,7 @@ export const api = {
   },
 
   async createUser(data: any) {
-    const snapshot = await get(ref(db, 'users'));
+    const snapshot = await get(ref(db, getPath('users')));
     const normalizedEmail = data.email?.toLowerCase().trim();
     if (snapshot.exists()) {
       const users = Object.values(snapshot.val()) as any[];
@@ -644,41 +740,41 @@ export const api = {
       permissions: data.permissions || DEFAULT_PERMISSIONS
     };
     
-    const newRef = push(ref(db, 'users'));
+    const newRef = push(ref(db, getPath('users')));
     await set(newRef, newUser);
     await logAction('Criar Usuário', `Usuário ${data.name} criado`);
     return newUser;
   },
 
   async updateUser(id: number, data: any) {
-    const snapshot = await get(ref(db, 'users'));
+    const snapshot = await get(ref(db, getPath('users')));
     if (!snapshot.exists()) throw new Error('Usuário não encontrado');
     
     const usersObj = snapshot.val();
     const userKey = Object.keys(usersObj).find(key => usersObj[key].id === id);
     if (!userKey) throw new Error('Usuário não encontrado');
     
-    await update(ref(db, `users/${userKey}`), data);
+    await update(ref(db, getPath(`users/${userKey}`)), data);
     await logAction('Atualizar Usuário', `Usuário ID ${id} atualizado`);
     return { ...usersObj[userKey], ...data };
   },
 
   async deleteUser(id: number) {
-    const snapshot = await get(ref(db, 'users'));
+    const snapshot = await get(ref(db, getPath('users')));
     if (!snapshot.exists()) return { success: true };
     
     const usersObj = snapshot.val();
     const userKey = Object.keys(usersObj).find(key => usersObj[key].id === id);
     if (userKey) {
-      await remove(ref(db, `users/${userKey}`));
+      await remove(ref(db, getPath(`users/${userKey}`)));
       await logAction('Excluir Usuário', `Usuário ID ${id} excluído`);
     }
     return { success: true };
   },
 
   async getDashboard(params?: { track?: string; analyst_id?: string; start_date?: string; end_date?: string }) {
-    const analysesSnapshot = await get(ref(db, 'analyses'));
-    const usersSnapshot = await get(ref(db, 'users'));
+    const analysesSnapshot = await get(ref(db, getPath('analyses')));
+    const usersSnapshot = await get(ref(db, getPath('users')));
     
     const analyses = analysesSnapshot.exists() ? Object.values(analysesSnapshot.val()) as any[] : [];
     const users = usersSnapshot.exists() ? Object.values(usersSnapshot.val()) as any[] : [];
@@ -713,7 +809,7 @@ export const api = {
     const byTrack = Object.entries(byTrackMap).map(([track, count]) => ({ track, count }));
 
     // Productivity aggregation
-    const analystsSnapshot = await get(ref(db, 'analysts'));
+    const analystsSnapshot = await get(ref(db, getPath('analysts')));
     const allAnalysts = analystsSnapshot.exists() ? Object.values(analystsSnapshot.val()) as any[] : [];
     
     const productivityByAnalystMap: Record<string, number> = {};
@@ -855,7 +951,7 @@ export const api = {
   },
 
   async getTracks() {
-    const snapshot = await get(ref(db, 'tracks'));
+    const snapshot = await get(ref(db, getPath('tracks')));
     if (!snapshot.exists()) return [];
 
     const tracksMap = new Map();
@@ -875,7 +971,7 @@ export const api = {
   },
 
   async createTrack(trackData: any) {
-    const snapshot = await get(ref(db, 'tracks'));
+    const snapshot = await get(ref(db, getPath('tracks')));
     if (snapshot.exists()) {
       const existing = Object.values(snapshot.val()).filter(Boolean) as any[];
       if (existing.some(t => (t.name || '').toLowerCase().trim() === (trackData.name || '').toLowerCase().trim())) {
@@ -883,7 +979,7 @@ export const api = {
       }
     }
 
-    const newRef = push(ref(db, 'tracks'));
+    const newRef = push(ref(db, getPath('tracks')));
     const track = { ...trackData, id: newRef.key, created_at: new Date().toISOString() };
     await set(newRef, track);
     await logAction('Criar Esteira', `Esteira ${track.name} criada`);
@@ -891,7 +987,7 @@ export const api = {
   },
 
   async cleanupTracks() {
-    const snapshot = await get(ref(db, 'tracks'));
+    const snapshot = await get(ref(db, getPath('tracks')));
     if (!snapshot.exists()) return;
 
     const allTracks = Object.values(snapshot.val()).filter(Boolean) as any[];
@@ -911,7 +1007,7 @@ export const api = {
     });
 
     for (const id of toDelete) {
-      await remove(ref(db, `tracks/${id}`));
+      await remove(ref(db, getPath(`tracks/${id}`)));
     }
     
     await logAction('Limpeza de Esteiras', `${toDelete.length} esteiras duplicadas removidas`);
@@ -919,13 +1015,13 @@ export const api = {
   },
 
   async updateTrack(id: string, trackData: any) {
-    const snapshot = await get(ref(db, 'tracks'));
+    const snapshot = await get(ref(db, getPath('tracks')));
     if (!snapshot.exists()) return null;
     const tracks = snapshot.val();
     const trackKey = Object.keys(tracks).find(key => tracks[key].id === id || key === id);
     
     if (trackKey) {
-      await update(ref(db, `tracks/${trackKey}`), trackData);
+      await update(ref(db, getPath(`tracks/${trackKey}`)), trackData);
       await logAction('Editar Esteira', `Esteira ${trackData.name || id} editada`);
       return { ...tracks[trackKey], ...trackData };
     }
@@ -934,7 +1030,7 @@ export const api = {
 
   async bulkRenameDemandType(oldName: string, newName: string, trackIds: string[]) {
     // 1. Update Tracks
-    const tracksSnapshot = await get(ref(db, 'tracks'));
+    const tracksSnapshot = await get(ref(db, getPath('tracks')));
     const trackNames: string[] = [];
     if (tracksSnapshot.exists()) {
       const tracks = tracksSnapshot.val();
@@ -955,7 +1051,7 @@ export const api = {
     }
 
     // 2. Update Analyses
-    const analysesSnapshot = await get(ref(db, 'analyses'));
+    const analysesSnapshot = await get(ref(db, getPath('analyses')));
     if (analysesSnapshot.exists()) {
       const analyses = analysesSnapshot.val();
       const analysisUpdates: any = {};
@@ -976,13 +1072,13 @@ export const api = {
   },
 
   async deleteTrack(id: string) {
-    const snapshot = await get(ref(db, 'tracks'));
+    const snapshot = await get(ref(db, getPath('tracks')));
     if (!snapshot.exists()) return { success: false };
     const tracks = snapshot.val();
     const trackKey = Object.keys(tracks).find(key => tracks[key].id === id || key === id);
     
     if (trackKey) {
-      await remove(ref(db, `tracks/${trackKey}`));
+      await remove(ref(db, getPath(`tracks/${trackKey}`)));
       await logAction('Excluir Esteira', `Esteira ID ${id} excluída`);
     }
     return { success: true };
@@ -990,30 +1086,30 @@ export const api = {
 
   async saveConsolidatedData(data: any[]) {
     const now = new Date().toISOString();
-    await set(ref(db, 'consolidated_data'), data);
-    await set(ref(db, 'metadata/last_processing_date'), now);
+    await set(ref(db, getPath('consolidated_data')), data);
+    await set(ref(db, getPath('metadata/last_processing_date')), now);
     await logAction('Consolidar Base', `${data.length} registros consolidados`);
     return { success: true };
   },
 
   async getLastProcessingDate() {
-    const snapshot = await get(ref(db, 'metadata/last_processing_date'));
+    const snapshot = await get(ref(db, getPath('metadata/last_processing_date')));
     if (!snapshot.exists()) return null;
     return snapshot.val() as string;
   },
 
   async getConsolidatedData() {
-    const snapshot = await get(ref(db, 'consolidated_data'));
+    const snapshot = await get(ref(db, getPath('consolidated_data')));
     if (!snapshot.exists()) return [];
     return snapshot.val() as any[];
   },
 
   async deleteConsolidatedData() {
-    await remove(ref(db, 'consolidated_data'));
-    await remove(ref(db, 'metadata/last_processing_date'));
+    await remove(ref(db, getPath('consolidated_data')));
+    await remove(ref(db, getPath('metadata/last_processing_date')));
     
     // Also clear productivity from all analysts
-    const analystsSnapshot = await get(ref(db, 'analysts'));
+    const analystsSnapshot = await get(ref(db, getPath('analysts')));
     if (analystsSnapshot.exists()) {
       const analystsObj = analystsSnapshot.val();
       const updates: any = {};
@@ -1030,7 +1126,7 @@ export const api = {
   },
 
   async updateAnalystsProductivity(productivityMap: Record<string, Record<string, number>>) {
-    const snapshot = await get(ref(db, 'analysts'));
+    const snapshot = await get(ref(db, getPath('analysts')));
     if (!snapshot.exists()) return { success: false };
     
     const analystsObj = snapshot.val();
