@@ -94,9 +94,9 @@ export const Logs: React.FC = () => {
   };
 
   const filteredLogs = Array.isArray(logs) ? logs.filter(log => {
-    const matchesSearch = log.user_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          log.module.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          log.record_id?.includes(searchTerm);
+    const matchesSearch = String(log.user_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          String(log.module || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          String(log.record_id || '').includes(searchTerm);
     const matchesAction = actionFilter ? log.action_type === actionFilter : true;
     const logDate = log.timestamp ? log.timestamp.split('T')[0] : '';
     const matchesDate = (dateFilter.start ? logDate >= dateFilter.start : true) && 
@@ -223,7 +223,7 @@ export const Logs: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400">
-                        {log.user_name.charAt(0)}
+                        {log.user_name && typeof log.user_name === 'string' ? log.user_name.charAt(0) : '?'}
                       </div>
                       <div>
                         <div className="text-sm font-bold text-slate-900 dark:text-white">{log.user_name}</div>

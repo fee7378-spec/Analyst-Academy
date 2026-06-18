@@ -110,6 +110,8 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
         setConsolidatedData(consolidated);
         if (canViewAnalysts) {
           setAnalysts(analystsData);
+        } else {
+          setAnalysts([currentUser as any]);
         }
       } catch (err: any) {
         console.error("Failed to load initial data:", err);
@@ -333,7 +335,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
     </div>
   );
 
-  const selectedAnalyst = analysts.find(a => a.id.toString() === filters.analyst_id);
+  const selectedAnalyst = analysts.find(a => a.id?.toString() === filters.analyst_id);
 
   return (
     <div className="space-y-8">
@@ -422,7 +424,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
           className="bg-blue-600 rounded-3xl p-8 text-white shadow-xl shadow-blue-500/20 flex flex-col md:flex-row items-center gap-8"
         >
           <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center text-4xl font-bold backdrop-blur-sm">
-            {selectedAnalyst.name.charAt(0)}
+            {selectedAnalyst.name && typeof selectedAnalyst.name === 'string' ? selectedAnalyst.name.charAt(0) : '?'}
           </div>
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-3xl font-bold mb-1">{selectedAnalyst.name}</h2>

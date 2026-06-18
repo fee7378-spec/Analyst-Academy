@@ -221,7 +221,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     setOtherDemandType(isOther ? analysis.demand_type : '');
 
     setFormData({
-      analyst_id: analysis.analyst_id.toString(),
+      analyst_id: analysis.analyst_id?.toString() || '',
       company_name: analysis.company_name,
       cnpj: analysis.cnpj,
       treatment_date: parseCSVDate(analysis.treatment_date),
@@ -345,8 +345,8 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
           analysis.demand_type,
           `"${analysis.company_name.replace(/"/g, '""')}"`,
           analysis.cnpj,
-          `"${analysis.analyst_name?.replace(/"/g, '""') || analysts.find(a => a.id.toString() === analysis.analyst_id?.toString())?.name?.replace(/"/g, '""') || ''}"`,
-          analysis.analyst_matricula || analysts.find(a => a.id.toString() === analysis.analyst_id?.toString())?.matricula || '',
+          `"${analysis.analyst_name?.replace(/"/g, '""') || analysts.find(a => a.id?.toString() === analysis.analyst_id?.toString())?.name?.replace(/"/g, '""') || ''}"`,
+          analysis.analyst_matricula || analysts.find(a => a.id?.toString() === analysis.analyst_id?.toString())?.matricula || '',
           formatLocalDate(analysis.treatment_date),
           analysis.status,
           `"${(analysis.status_observation || '').replace(/"/g, '""')}"`,
@@ -478,7 +478,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 demand_type: row['Tipo de Demanda'] || 'Outro',
                 company_name: row['Empresa'] || row['Nome'] || '',
                 cnpj: formatDocument(row['CNPJ'] || row['CPF'] || ''),
-                analyst_id: analyst.id.toString(),
+                analyst_id: analyst.id?.toString() || '',
                 treatment_date: parseCSVDate(row['Data']),
                 status: row['Erro'] === 'Sim' ? 'Sim' : 'Não',
                 status_observation: row['Observação do Erro'] || '',
@@ -535,10 +535,10 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   };
 
   const filteredAnalyses = Array.isArray(analyses) ? analyses.filter(a => {
-    const analystName = a.analyst_name || analysts.find(an => an.id.toString() === a.analyst_id?.toString())?.name || '';
-    const matchesSearch = a.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          a.demand_number?.includes(searchTerm) ||
-                          analystName.toLowerCase().includes(searchTerm.toLowerCase());
+    const analystName = a.analyst_name || analysts.find(an => an.id?.toString() === a.analyst_id?.toString())?.name || '';
+    const matchesSearch = String(a.company_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          String(a.demand_number || '').includes(searchTerm) ||
+                          String(analystName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter ? a.status === statusFilter : true;
     const matchesDate = (dateFilter.start ? a.treatment_date >= dateFilter.start : true) && 
                         (dateFilter.end ? a.treatment_date <= dateFilter.end : true);
@@ -742,11 +742,11 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     >
                       <span className={formData.analyst_id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
                         {formData.analyst_id 
-                          ? analysts.find(a => a.id.toString() === formData.analyst_id)?.name 
+                          ? analysts.find(a => a.id?.toString() === formData.analyst_id)?.name 
                           : 'Selecione um analista'}
                         {formData.analyst_id && (
                           <span className="ml-2 text-slate-400 dark:text-slate-500 text-sm font-medium uppercase">
-                            {analysts.find(a => a.id.toString() === formData.analyst_id)?.matricula}
+                            {analysts.find(a => a.id?.toString() === formData.analyst_id)?.matricula}
                           </span>
                         )}
                       </span>
@@ -771,7 +771,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                                 key={a.id}
                                 type="button"
                                 onClick={() => {
-                                  setFormData({...formData, analyst_id: a.id.toString()});
+                                  setFormData({...formData, analyst_id: a.id?.toString() || ''});
                                   setIsAnalystDropdownOpen(false);
                                 }}
                                 className="w-full px-5 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between group border-b border-slate-50 dark:border-slate-800 last:border-0"
@@ -1007,7 +1007,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
                   type="text"
-                  placeholder="Buscar por empresa, demanda ou analista..."
+                  placeholder={segment === 'PF' ? "Buscar por nome, demanda ou analista..." : "Buscar por empresa, demanda ou analista..."}
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
@@ -1105,10 +1105,10 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-slate-600 dark:text-slate-400">
-                            {analysis.analyst_name || analysts.find(a => a.id.toString() === analysis.analyst_id?.toString())?.name || 'N/A'}
+                            {analysis.analyst_name || analysts.find(a => a.id?.toString() === analysis.analyst_id?.toString())?.name || 'N/A'}
                           </div>
                           <div className="text-xs text-slate-400 dark:text-slate-500">
-                            Login: {analysis.analyst_matricula || analysts.find(a => a.id.toString() === analysis.analyst_id?.toString())?.matricula || 'N/A'}
+                            Login: {analysis.analyst_matricula || analysts.find(a => a.id?.toString() === analysis.analyst_id?.toString())?.matricula || 'N/A'}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -1242,10 +1242,10 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     <div>
                       <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block">Analista</span>
                       <span className="text-slate-900 dark:text-white">
-                        {viewingAnalysis.analyst_name || analysts.find(a => a.id.toString() === viewingAnalysis.analyst_id?.toString())?.name || 'N/A'}
+                        {viewingAnalysis.analyst_name || analysts.find(a => a.id?.toString() === viewingAnalysis.analyst_id?.toString())?.name || 'N/A'}
                       </span>
                       <span className="text-xs text-slate-500 dark:text-slate-400 block">
-                        Login: {viewingAnalysis.analyst_matricula || analysts.find(a => a.id.toString() === viewingAnalysis.analyst_id?.toString())?.matricula || 'N/A'}
+                        Login: {viewingAnalysis.analyst_matricula || analysts.find(a => a.id?.toString() === viewingAnalysis.analyst_id?.toString())?.matricula || 'N/A'}
                       </span>
                     </div>
                     

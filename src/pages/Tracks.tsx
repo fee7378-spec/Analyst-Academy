@@ -41,7 +41,8 @@ import {
   FilePlus,
   Building,
   Settings,
-  Hammer
+  Hammer,
+  Tags
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
@@ -239,7 +240,7 @@ export const Tracks: React.FC = () => {
   };
 
   const filteredTracks = tracks.filter(t => 
-    t.name.toLowerCase().includes(searchTerm.toLowerCase())
+    String(t.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -631,17 +632,24 @@ export const Tracks: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <h3 className="font-semibold text-slate-800 dark:text-white">Configuração do Formulário</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Selecione quais campos devem aparecer no formulário de Nova Monitoria para esta esteira.
-                  </p>
+                <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                      <Settings className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-800 dark:text-white">Configuração do Formulário</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Personalize os campos exibidos na criação e edição de monitorias.
+                      </p>
+                    </div>
+                  </div>
                   
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60">
                     {[
                       { key: 'showAnalyst', label: 'Analista' },
-                      { key: 'showCompany', label: 'Empresa' },
-                      { key: 'showCnpj', label: 'CNPJ' },
+                      { key: 'showCompany', label: 'Empresa / Nome' },
+                      { key: 'showCnpj', label: 'CNPJ / CPF' },
                       { key: 'showDate', label: 'Data da Monitoria' },
                       { key: 'showDemandNumber', label: 'Número da Demanda' },
                       { key: 'showDemandType', label: 'Tipo de Demanda' },
@@ -649,35 +657,61 @@ export const Tracks: React.FC = () => {
                       { key: 'showStatus', label: 'Status' },
                       { key: 'showStatusObservation', label: 'Observação do Status' },
                       { key: 'showTag', label: 'Tag' }
-                    ].map((field) => (
-                      <label key={field.key} className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={formData.formConfig[field.key as keyof typeof formData.formConfig] as boolean}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            formConfig: {
-                              ...formData.formConfig,
-                              [field.key]: e.target.checked
-                            }
-                          })}
-                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-                        />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {field.label}
-                        </span>
-                      </label>
-                    ))}
+                    ].map((field) => {
+                      const isChecked = formData.formConfig[field.key as keyof typeof formData.formConfig] as boolean;
+                      return (
+                        <label 
+                          key={field.key} 
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                            isChecked 
+                            ? 'bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-500/30 shadow-sm' 
+                            : 'bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <span className={`text-sm font-medium ${isChecked ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-400'}`}>
+                            {field.label}
+                          </span>
+                          <div className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out ${isChecked ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'}`}>
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-200 shadow ring-0 transition duration-200 ease-in-out ${isChecked ? 'translate-x-2' : '-translate-x-2'}`} />
+                          </div>
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={isChecked}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              formConfig: {
+                                ...formData.formConfig,
+                                [field.key]: e.target.checked
+                              }
+                            })}
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
+                      <ClipboardList className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-800 dark:text-white">Tipos de Demanda</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Gerencie os tipos de demanda disponíveis para esta esteira.
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="space-y-3 pt-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Tipos de Demanda
-                    </label>
                     {localStorage.getItem('segment') === 'PF' && formData.name === 'Fatca' ? (
-                      <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl">
-                        <p className="text-sm text-red-600 dark:text-red-400 font-medium pb-2">Os tipos de demanda para esta esteira estão bloqueados pelo sistema.</p>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                      <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl">
+                        <p className="text-sm text-red-600 dark:text-red-400 font-medium pb-3 flex items-center gap-2">
+                          <Shield className="w-4 h-4" />
+                          Os tipos de demanda para esta esteira estão bloqueados pelo sistema.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
                           {formData.formConfig.demandTypes.map((type, index) => (
                             <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-300 rounded-lg text-sm font-semibold">
                               {type}
@@ -686,29 +720,35 @@ export const Tracks: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {DEMAND_TYPES.filter(t => !formData.formConfig.demandTypes.includes(t)).map((type, index) => (
-                            <button
-                              key={`avail-${index}`}
-                              type="button"
-                              onClick={() => {
-                                setFormData({
-                                  ...formData,
-                                  formConfig: {
-                                    ...formData.formConfig,
-                                    demandTypes: [...formData.formConfig.demandTypes, type]
-                                  }
-                                });
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:border-blue-300 dark:hover:border-blue-700 rounded-lg text-sm transition-colors"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              {type}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
+                      <div className="bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 space-y-4">
+                        {DEMAND_TYPES.filter(t => !formData.formConfig.demandTypes.includes(t)).length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {DEMAND_TYPES.filter(t => !formData.formConfig.demandTypes.includes(t)).map((type, index) => (
+                              <button
+                                key={`avail-${index}`}
+                                type="button"
+                                onClick={() => {
+                                  setFormData({
+                                    ...formData,
+                                    formConfig: {
+                                      ...formData.formConfig,
+                                      demandTypes: [...formData.formConfig.demandTypes, type]
+                                    }
+                                  });
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:border-emerald-300 dark:hover:border-emerald-700 rounded-xl text-sm transition-all"
+                              >
+                                <Plus className="w-4 h-4" />
+                                {type}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2 relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pt-0.5 pointer-events-none">
+                            <Plus className="h-5 w-5 text-slate-400" />
+                          </div>
                           <input
                             type="text"
                             value={newDemandType}
@@ -728,8 +768,8 @@ export const Tracks: React.FC = () => {
                                 }
                               }
                             }}
-                            placeholder="Adicionar novo tipo..."
-                            className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                            placeholder="Adicionar novo tipo personalizado..."
+                            className="flex-1 pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm"
                           />
                           <button
                             type="button"
@@ -745,72 +785,109 @@ export const Tracks: React.FC = () => {
                                 setNewDemandType('');
                               }
                             }}
-                            className="px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                            className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors font-medium flex items-center gap-2 text-sm"
                           >
-                            <Plus className="w-5 h-5" />
+                            Adicionar
                           </button>
                         </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {formData.formConfig.demandTypes.map((type, index) => (
-                            <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
-                              {type}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newTypes = [...formData.formConfig.demandTypes];
-                                  newTypes.splice(index, 1);
-                                  setFormData({
-                                    ...formData,
-                                    formConfig: {
-                                      ...formData.formConfig,
-                                      demandTypes: newTypes
-                                    }
-                                  });
-                                }}
-                                className="text-slate-400 hover:text-red-500 transition-colors"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </>
+
+                        {formData.formConfig.demandTypes.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            {formData.formConfig.demandTypes.map((type, index) => (
+                              <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm shadow-sm group">
+                                {type}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newTypes = [...formData.formConfig.demandTypes];
+                                    newTypes.splice(index, 1);
+                                    setFormData({
+                                      ...formData,
+                                      formConfig: {
+                                        ...formData.formConfig,
+                                        demandTypes: newTypes
+                                      }
+                                    });
+                                  }}
+                                  className="text-slate-400 group-hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 p-1 rounded-md transition-colors -mr-1"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
 
-                  <div className="space-y-3 pt-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Tags
-                    </label>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {(segment === 'PF' ? initialPfTags : TAGS).filter(t => !formData.formConfig.tags.includes(t)).map((tag, index) => (
+                  <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                        <Tags className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-800 dark:text-white">Tags</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Gerencie as tags disponíveis para esta esteira.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 space-y-4">
+                      {(segment === 'PF' ? initialPfTags : TAGS).filter(t => !formData.formConfig.tags.includes(t)).length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {(segment === 'PF' ? initialPfTags : TAGS).filter(t => !formData.formConfig.tags.includes(t)).map((tag, index) => (
+                            <button
+                              key={`avail-tag-${index}`}
+                              type="button"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  formConfig: {
+                                    ...formData.formConfig,
+                                    tags: [...formData.formConfig.tags, tag]
+                                  }
+                                });
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:border-blue-300 dark:hover:border-blue-700 rounded-xl text-sm transition-all"
+                            >
+                              <Plus className="w-4 h-4" />
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-2 relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pt-0.5 pointer-events-none">
+                          <Plus className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                          type="text"
+                          value={newTag}
+                          onChange={(e) => setNewTag(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (newTag.trim()) {
+                                setFormData({
+                                  ...formData,
+                                  formConfig: {
+                                    ...formData.formConfig,
+                                    tags: [...formData.formConfig.tags, newTag.trim()]
+                                  }
+                                });
+                                setNewTag('');
+                              }
+                            }
+                          }}
+                          placeholder="Adicionar nova tag personalizada..."
+                          className="flex-1 pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-sm"
+                        />
                         <button
-                          key={`avail-tag-${index}`}
                           type="button"
                           onClick={() => {
-                            setFormData({
-                              ...formData,
-                              formConfig: {
-                                ...formData.formConfig,
-                                tags: [...formData.formConfig.tags, tag]
-                              }
-                            });
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:border-blue-300 dark:hover:border-blue-700 rounded-lg text-sm transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
                             if (newTag.trim()) {
                               setFormData({
                                 ...formData,
@@ -821,58 +898,43 @@ export const Tracks: React.FC = () => {
                               });
                               setNewTag('');
                             }
-                          }
-                        }}
-                        placeholder="Adicionar nova tag..."
-                        className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (newTag.trim()) {
-                            setFormData({
-                              ...formData,
-                              formConfig: {
-                                ...formData.formConfig,
-                                tags: [...formData.formConfig.tags, newTag.trim()]
-                              }
-                            });
-                            setNewTag('');
-                          }
-                        }}
-                        className="px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                      >
-                        <Plus className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.formConfig.tags.map((tag, index) => (
-                        <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newTags = [...formData.formConfig.tags];
-                              newTags.splice(index, 1);
-                              setFormData({
-                                ...formData,
-                                formConfig: {
-                                  ...formData.formConfig,
-                                  tags: newTags
-                                }
-                              });
-                            }}
-                            className="text-slate-400 hover:text-red-500 transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </span>
-                      ))}
+                          }}
+                          className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors font-medium flex items-center gap-2 text-sm"
+                        >
+                          Adicionar
+                        </button>
+                      </div>
+
+                      {formData.formConfig.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {formData.formConfig.tags.map((tag, index) => (
+                            <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm shadow-sm group">
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newTags = [...formData.formConfig.tags];
+                                  newTags.splice(index, 1);
+                                  setFormData({
+                                    ...formData,
+                                    formConfig: {
+                                      ...formData.formConfig,
+                                      tags: newTags
+                                    }
+                                  });
+                                }}
+                                className="text-slate-400 group-hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 p-1 rounded-md transition-colors -mr-1"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
 
-                <div className="flex gap-3 pt-4 shrink-0">
+                  <div className="flex gap-3 pt-4 shrink-0">
                   <button
                     type="button"
                     onClick={() => {

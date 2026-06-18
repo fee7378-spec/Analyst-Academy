@@ -605,9 +605,9 @@ export const Profiles: React.FC = () => {
   };
 
   const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    u.matricula.toLowerCase().includes(searchTerm.toLowerCase())
+    String(u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (u.email && String(u.email).toLowerCase().includes(searchTerm.toLowerCase())) ||
+    String(u.matricula || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -723,7 +723,7 @@ export const Profiles: React.FC = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 dark:bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-600 font-bold">
-                              {user.name.charAt(0)}
+                              {user.name && typeof user.name === 'string' ? user.name.charAt(0) : '?'}
                             </div>
                             <div>
                               <div className="text-sm font-bold text-slate-900 dark:text-white">{user.name}</div>
@@ -817,7 +817,7 @@ export const Profiles: React.FC = () => {
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-6">
                 <div className="flex items-center gap-6">
                   <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-600 text-2xl font-bold">
-                    {selectedUser.name.charAt(0)}
+                    {selectedUser.name && typeof selectedUser.name === 'string' ? selectedUser.name.charAt(0) : '?'}
                   </div>
                   <div className="flex-1">
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedUser.name}</h2>

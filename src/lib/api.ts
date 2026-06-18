@@ -3,9 +3,9 @@ import { db, auth, logsDb, ref, get, set, update, remove, push } from './firebas
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
 import { DEMAND_TYPES, TAGS } from '../constants';
 
-export function getPath(basePath: string) {
+export function getPath(basePath: string, overrideSegment?: string) {
   if (typeof window !== 'undefined') {
-    const segment = localStorage.getItem('segment') || 'PJ';
+    const segment = overrideSegment || localStorage.getItem('segment') || 'PJ';
     if (
       basePath === 'users' || basePath.startsWith('users/') ||
       basePath === 'templates' || basePath.startsWith('templates/')
@@ -20,9 +20,9 @@ export function getPath(basePath: string) {
   return basePath;
 }
 
-export const normalizeString = (str: string) => {
+export const normalizeString = (str: any) => {
   if (!str) return '';
-  return str
+  return String(str)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -241,13 +241,13 @@ export const api = {
     if (!snapshot.exists()) throw new Error('Usuário não encontrado');
     
     const usersObj = snapshot.val();
-    const normalizedId = identifier.toLowerCase().trim();
+    const normalizedId = String(identifier || '').toLowerCase().trim();
     
     const userKey = Object.keys(usersObj).find(key => {
       const u = usersObj[key];
       if (!u || typeof u !== 'object') return false;
-      const emailMatch = u.email?.toLowerCase().trim() === normalizedId;
-      const matriculaMatch = u.matricula?.toLowerCase().trim() === normalizedId;
+      const emailMatch = String(u.email || '').toLowerCase().trim() === normalizedId;
+      const matriculaMatch = String(u.matricula || '').toLowerCase().trim() === normalizedId;
       return emailMatch || matriculaMatch;
     });
     
@@ -262,12 +262,12 @@ export const api = {
     if (!snapshot.exists()) throw new Error('Usuário não encontrado');
     
     const usersObj = snapshot.val();
-    const normalizedId = identifier.toLowerCase().trim();
+    const normalizedId = String(identifier || '').toLowerCase().trim();
     const userKey = Object.keys(usersObj).find(key => {
       const u = usersObj[key];
       if (!u || typeof u !== 'object') return false;
-      const emailMatch = u.email?.toLowerCase().trim() === normalizedId;
-      const matriculaMatch = u.matricula?.toLowerCase().trim() === normalizedId;
+      const emailMatch = String(u.email || '').toLowerCase().trim() === normalizedId;
+      const matriculaMatch = String(u.matricula || '').toLowerCase().trim() === normalizedId;
       return emailMatch || matriculaMatch;
     });
     
@@ -346,7 +346,7 @@ export const api = {
   },
 
   async login(identifier: string, password: string) {
-    const normalizedId = identifier.toLowerCase().trim();
+    const normalizedId = String(identifier || '').toLowerCase().trim();
     
     // First, find the user in the database to get their actual email
     const usersRef = ref(db, getPath('users'));
@@ -360,8 +360,8 @@ export const api = {
       userKey = Object.keys(usersObj).find(key => {
         const u = usersObj[key];
         if (!u || typeof u !== 'object') return false;
-        const emailMatch = u.email?.toLowerCase().trim() === normalizedId;
-        const matriculaMatch = u.matricula?.toLowerCase().trim() === normalizedId;
+        const emailMatch = String(u.email || '').toLowerCase().trim() === normalizedId;
+        const matriculaMatch = String(u.matricula || '').toLowerCase().trim() === normalizedId;
         return emailMatch || matriculaMatch;
       });
       
@@ -421,7 +421,7 @@ export const api = {
   async getAnalysts() {
     const snapshot = await get(ref(db, getPath('analysts')));
     if (!snapshot.exists()) return [];
-    return Object.values(snapshot.val()) as any[];
+    return Object.values(snapshot.val()).filter(Boolean) as any[];
   },
 
   async createAnalyst(data: any) {
@@ -493,7 +493,7 @@ export const api = {
   async getAnalyses() {
     const snapshot = await get(ref(db, getPath('analyses')));
     if (!snapshot.exists()) return [];
-    return Object.values(snapshot.val());
+    return Object.values(snapshot.val()).filter(Boolean);
   },
 
   async createAnalysis(data: any) {
@@ -721,10 +721,10 @@ export const api = {
 
   async createUser(data: any) {
     const snapshot = await get(ref(db, getPath('users')));
-    const normalizedEmail = data.email?.toLowerCase().trim();
+    const normalizedEmail = String(data.email || '').toLowerCase().trim();
     if (snapshot.exists()) {
       const users = Object.values(snapshot.val()) as any[];
-      if (users.some(u => u.email?.toLowerCase().trim() === normalizedEmail)) {
+      if (users.some(u => String(u.email || '').toLowerCase().trim() === normalizedEmail)) {
         throw new Error('E-mail já cadastrado');
       }
     }
@@ -961,7 +961,7 @@ export const api = {
     allTracks.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
 
     allTracks.forEach(track => {
-      const normalizedName = (track.name || '').toLowerCase().trim();
+      const normalizedName = String(track.name || '').toLowerCase().trim();
       if (!tracksMap.has(normalizedName)) {
         tracksMap.set(normalizedName, track);
       }
@@ -974,7 +974,7 @@ export const api = {
     const snapshot = await get(ref(db, getPath('tracks')));
     if (snapshot.exists()) {
       const existing = Object.values(snapshot.val()).filter(Boolean) as any[];
-      if (existing.some(t => (t.name || '').toLowerCase().trim() === (trackData.name || '').toLowerCase().trim())) {
+      if (existing.some(t => String(t.name || '').toLowerCase().trim() === String(trackData.name || '').toLowerCase().trim())) {
         throw new Error('Já existe uma esteira com este nome');
       }
     }
@@ -998,7 +998,7 @@ export const api = {
     allTracks.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
 
     allTracks.forEach(track => {
-      const normalizedName = (track.name || '').toLowerCase().trim();
+      const normalizedName = String(track.name || '').toLowerCase().trim();
       if (!tracksMap.has(normalizedName)) {
         tracksMap.set(normalizedName, track.id);
       } else {
@@ -1084,49 +1084,50 @@ export const api = {
     return { success: true };
   },
 
-  async saveConsolidatedData(data: any[]) {
+  async saveConsolidatedData(data: any[], segment?: string) {
     const now = new Date().toISOString();
-    await set(ref(db, getPath('consolidated_data')), data);
-    await set(ref(db, getPath('metadata/last_processing_date')), now);
-    await logAction('Consolidar Base', `${data.length} registros consolidados`);
+    await set(ref(db, getPath('consolidated_data', segment)), data);
+    await set(ref(db, getPath('metadata/last_processing_date', segment)), now);
+    await logAction('Consolidar Base', `${data.length} registros consolidados na base ${segment || 'Atual'}`);
     return { success: true };
   },
 
-  async getLastProcessingDate() {
-    const snapshot = await get(ref(db, getPath('metadata/last_processing_date')));
+  async getLastProcessingDate(segment?: string) {
+    const snapshot = await get(ref(db, getPath('metadata/last_processing_date', segment)));
     if (!snapshot.exists()) return null;
     return snapshot.val() as string;
   },
 
-  async getConsolidatedData() {
-    const snapshot = await get(ref(db, getPath('consolidated_data')));
+  async getConsolidatedData(segment?: string) {
+    const snapshot = await get(ref(db, getPath('consolidated_data', segment)));
     if (!snapshot.exists()) return [];
-    return snapshot.val() as any[];
+    const data = snapshot.val();
+    return Array.isArray(data) ? data : Object.values(data);
   },
 
-  async deleteConsolidatedData() {
-    await remove(ref(db, getPath('consolidated_data')));
-    await remove(ref(db, getPath('metadata/last_processing_date')));
+  async deleteConsolidatedData(segment?: string) {
+    await remove(ref(db, getPath('consolidated_data', segment)));
+    await remove(ref(db, getPath('metadata/last_processing_date', segment)));
     
     // Also clear productivity from all analysts
-    const analystsSnapshot = await get(ref(db, getPath('analysts')));
+    const analystsSnapshot = await get(ref(db, getPath('analysts', segment)));
     if (analystsSnapshot.exists()) {
       const analystsObj = analystsSnapshot.val();
       const updates: any = {};
       Object.keys(analystsObj).forEach(key => {
-        updates[`analysts/${key}/productivity`] = null;
+        updates[`${getPath('analysts', segment)}/${key}/productivity`] = null;
       });
       if (Object.keys(updates).length > 0) {
         await update(ref(db), updates);
       }
     }
 
-    await logAction('Excluir Base Consolidada', 'Toda a base de dados consolidada e produtividade dos analistas foram excluídas');
+    await logAction('Excluir Base Consolidada', `Toda a base de dados consolidada e produtividade dos analistas da base ${segment || 'Atual'} foram excluídas`);
     return { success: true };
   },
 
-  async updateAnalystsProductivity(productivityMap: Record<string, Record<string, number>>) {
-    const snapshot = await get(ref(db, getPath('analysts')));
+  async updateAnalystsProductivity(productivityMap: Record<string, Record<string, number>>, segment?: string) {
+    const snapshot = await get(ref(db, getPath('analysts', segment)));
     if (!snapshot.exists()) return { success: false };
     
     const analystsObj = snapshot.val();
@@ -1143,13 +1144,13 @@ export const api = {
           const safeKey = dateKey.replace(/[\.\#\$\/\[\]]/g, '-');
           sanitizedMap[safeKey] = value;
         });
-        updates[`analysts/${key}/productivity`] = sanitizedMap;
+        updates[`${getPath('analysts', segment)}/${key}/productivity`] = sanitizedMap;
       }
     });
     
     if (Object.keys(updates).length > 0) {
       await update(ref(db), updates);
-      await logAction('Atualizar Produtividade', `Produtividade de ${Object.keys(updates).length} analistas atualizada`);
+      await logAction('Atualizar Produtividade', `Produtividade de ${Object.keys(updates).length} analistas atualizada na base ${segment || 'Atual'}`);
     }
     
     return { success: true };

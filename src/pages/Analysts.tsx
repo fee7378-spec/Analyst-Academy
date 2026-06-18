@@ -224,7 +224,8 @@ export const Analysts: React.FC = () => {
     } else {
       // Fallback to consolidatedData if productivity map is not yet populated
       const normalizedAnalystName = normalizeString(analyst.name);
-      analystProductivity = consolidatedData.filter(c => c && c.analyst && normalizeString(String(c.analyst)) === normalizedAnalystName).length;
+      const cData = Array.isArray(consolidatedData) ? consolidatedData : [];
+      analystProductivity = cData.filter((c: any) => c && c.analyst && normalizeString(String(c.analyst)) === normalizedAnalystName).length;
     }
 
     return {
@@ -237,6 +238,7 @@ export const Analysts: React.FC = () => {
 
   const getAnalystEvolution = (analyst: User, type: 'monitoria' | 'produtividade') => {
     const analystMonitorings = analyses.filter(a => Number(a.analyst_id) === analyst.id);
+    const normalizedAnalystName = normalizeString(analyst.name);
     
     // Determine date range based on type
     let minDate: Date | null = null;
@@ -262,6 +264,13 @@ export const Analysts: React.FC = () => {
             processDate(dateStr);
           }
         });
+      } else {
+        const cData = Array.isArray(consolidatedData) ? consolidatedData : [];
+        cData.forEach((c: any) => {
+          if (c && c.analyst && normalizeString(String(c.analyst)) === normalizedAnalystName && c.date) {
+            processDate(c.date);
+          }
+        });
       }
     }
 
@@ -283,7 +292,13 @@ export const Analysts: React.FC = () => {
       const dayStr = `${day}/${month}`;
       
       const dayAnalyses = analystMonitorings.filter(a => a.treatment_date === dayKey);
-      const dayProductivity = analyst.productivity ? (analyst.productivity[dayKey] || 0) : 0;
+      let dayProductivity = 0;
+      if (analyst.productivity) {
+        dayProductivity = analyst.productivity[dayKey] || 0;
+      } else {
+        const cData = Array.isArray(consolidatedData) ? consolidatedData : [];
+        dayProductivity = cData.filter((c: any) => c && c.analyst && normalizeString(String(c.analyst)) === normalizedAnalystName && c.date === dayKey).length;
+      }
 
       evolution.push({
         date: dayStr,
@@ -322,8 +337,8 @@ export const Analysts: React.FC = () => {
 
   const filteredAnalysts = Array.isArray(analysts) ? analysts.filter(a => {
     const search = (searchTerm || '').toLowerCase();
-    const searchMatch = (a.name || '').toLowerCase().includes(search) || 
-           (a.matricula || '').toLowerCase().includes(search);
+    const searchMatch = String(a.name || '').toLowerCase().includes(search) || 
+           String(a.matricula || '').toLowerCase().includes(search);
     const trackMatch = selectedTrackFilter ? a.esteira === selectedTrackFilter : true;
     return searchMatch && trackMatch;
   }) : [];
@@ -403,7 +418,7 @@ export const Analysts: React.FC = () => {
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-xl font-bold text-slate-400 dark:text-slate-600 shrink-0">
-                  {analyst.name.charAt(0)}
+                  {analyst.name && typeof analyst.name === 'string' ? analyst.name.charAt(0) : '?'}
                 </div>
                 <div className="pr-2 min-w-0 flex-1">
                   <h3 className="font-bold text-slate-900 dark:text-white truncate" title={analyst.name}>{analyst.name}</h3>

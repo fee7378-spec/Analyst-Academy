@@ -154,10 +154,10 @@ export const DataProcessing: React.FC = () => {
       toast.error('Você não tem permissão para realizar esta ação');
       return;
     }
-    const consolidated: any[] = [];
     
-    const processFile = (file: FileData | null) => {
-      if (!file) return;
+    const processFile = (file: FileData | null, segment: 'PJ' | 'PF') => {
+      const result: any[] = [];
+      if (!file) return result;
       
       file.sheets.forEach(sheet => {
         if (!sheet.selected) return;
@@ -200,30 +200,31 @@ export const DataProcessing: React.FC = () => {
             }
 
             if (dateStr) {
-              consolidated.push({
+              result.push({
                 analyst: String(name).trim().toUpperCase(),
                 date: dateStr,
                 track: String(track).trim(),
                 source: file.name,
-                sheet: sheet.name
+                sheet: sheet.name,
+                segment
               });
             }
           }
         });
       });
+      return result;
     };
 
-    processFile(files.pj);
-    processFile(files.pf);
+    const consolidatedPJ = processFile(files.pj, 'PJ');
+    const consolidatedPF = processFile(files.pf, 'PF');
 
-    if (consolidated.length === 0) {
+    if (consolidatedPJ.length === 0 && consolidatedPF.length === 0) {
       toast.error('Nenhum dado encontrado com as colunas especificadas.');
       return;
     }
 
     // Automatically fix inverted dates (MM/DD vs DD/MM)
-    // Only swap if the month value is greater than 12, which clearly indicates inversion
-    consolidated.forEach(item => {
+    [...consolidatedPJ, ...consolidatedPF].forEach(item => {
       const parts = item.date.split('-');
       if (parts.length === 3) {
         const [y, m, d] = parts;
@@ -231,30 +232,43 @@ export const DataProcessing: React.FC = () => {
         const dayVal = parseInt(d);
         
         if (monthVal > 12) {
-          // Swap month and day
           item.date = `${y}-${String(dayVal).padStart(2, '0')}-${String(monthVal).padStart(2, '0')}`;
         }
       }
     });
 
     try {
-      await api.saveConsolidatedData(consolidated);
-      
-      // Calculate daily productivity per analyst
-      const productivityMap: Record<string, Record<string, number>> = {};
-      consolidated.forEach(item => {
-        const normalizedAnalyst = normalizeString(item.analyst);
-        const date = item.date;
-        if (!productivityMap[normalizedAnalyst]) {
-          productivityMap[normalizedAnalyst] = {};
-        }
-        productivityMap[normalizedAnalyst][date] = (productivityMap[normalizedAnalyst][date] || 0) + 1;
-      });
-      
-      await api.updateAnalystsProductivity(productivityMap);
+      let total = 0;
+
+      if (consolidatedPJ.length > 0) {
+        await api.saveConsolidatedData(consolidatedPJ, 'PJ');
+        const productivityMapPJ: Record<string, Record<string, number>> = {};
+        consolidatedPJ.forEach(item => {
+          const normalizedAnalyst = normalizeString(item.analyst);
+          const date = item.date;
+          if (!productivityMapPJ[normalizedAnalyst]) productivityMapPJ[normalizedAnalyst] = {};
+          productivityMapPJ[normalizedAnalyst][date] = (productivityMapPJ[normalizedAnalyst][date] || 0) + 1;
+        });
+        await api.updateAnalystsProductivity(productivityMapPJ, 'PJ');
+        total += consolidatedPJ.length;
+      }
+
+      if (consolidatedPF.length > 0) {
+        await api.saveConsolidatedData(consolidatedPF, 'PF');
+        const productivityMapPF: Record<string, Record<string, number>> = {};
+        consolidatedPF.forEach(item => {
+          const normalizedAnalyst = normalizeString(item.analyst);
+          const date = item.date;
+          if (!productivityMapPF[normalizedAnalyst]) productivityMapPF[normalizedAnalyst] = {};
+          productivityMapPF[normalizedAnalyst][date] = (productivityMapPF[normalizedAnalyst][date] || 0) + 1;
+        });
+        await api.updateAnalystsProductivity(productivityMapPF, 'PF');
+        total += consolidatedPF.length;
+      }
+
       await loadLastProcessingDate();
       
-      toast.success(`${consolidated.length} registros consolidados com sucesso!`);
+      toast.success(`${total} registros consolidados com sucesso!`);
     } catch (error) {
       console.error('Erro ao salvar dados consolidados:', error);
       toast.error('Erro ao salvar os dados no Firebase.');
@@ -446,7 +460,7 @@ export const DataProcessing: React.FC = () => {
                   onDrop={(e) => handleDrop(e, 'pj')}
                   className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
                 >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                     <Upload className="w-8 h-8 text-slate-400 mb-3" />
                     <p className="text-sm text-slate-500 dark:text-slate-400">Clique ou arraste para selecionar o arquivo PJ</p>
                   </div>
@@ -503,7 +517,7 @@ export const DataProcessing: React.FC = () => {
                   onDrop={(e) => handleDrop(e, 'pf')}
                   className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
                 >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                     <Upload className="w-8 h-8 text-slate-400 mb-3" />
                     <p className="text-sm text-slate-500 dark:text-slate-400">Clique ou arraste para selecionar o arquivo PF</p>
                   </div>
