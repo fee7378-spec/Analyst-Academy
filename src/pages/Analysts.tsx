@@ -407,9 +407,9 @@ export const Analysts: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAnalysts.map((analyst) => (
+        {filteredAnalysts.map((analyst, index) => (
           <motion.div
-            key={analyst.id}
+            key={analyst.id || `analyst-${index}`}
             layout
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -500,7 +500,7 @@ export const Analysts: React.FC = () => {
                   <input 
                     required
                     type="text"
-                    value={formData.name}
+                    value={formData.name || ''}
                     onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white uppercase"
                   />
@@ -510,7 +510,7 @@ export const Analysts: React.FC = () => {
                   <input 
                     required
                     type="text"
-                    value={formData.matricula}
+                    value={formData.matricula || ''}
                     onChange={e => setFormData({...formData, matricula: e.target.value.toUpperCase()})}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                   />
@@ -519,7 +519,7 @@ export const Analysts: React.FC = () => {
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Esteira</label>
                   <select 
                     required
-                    value={formData.esteira}
+                    value={formData.esteira || ''}
                     onChange={e => setFormData({...formData, esteira: e.target.value})}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                   >
@@ -532,7 +532,7 @@ export const Analysts: React.FC = () => {
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Data de Admissão</label>
                   <input 
                     type="date"
-                    value={formData.admission_date}
+                    value={formData.admission_date || ''}
                     onChange={e => setFormData({...formData, admission_date: e.target.value})}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                   />

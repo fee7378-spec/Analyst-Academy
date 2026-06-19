@@ -14,7 +14,8 @@ import {
   Plus,
   FileSpreadsheet,
   Settings,
-  AlertCircle
+  AlertCircle,
+  GraduationCap
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -62,9 +63,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ user }) => {
 
   return (
     <aside className="w-64 bg-slate-900 text-white h-screen flex flex-col sticky top-0">
-      <div className="p-6 border-b border-slate-800">
-        <h1 className="text-xl font-bold tracking-tight text-blue-400">Analista Academy</h1>
-        <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest">{user.role}</p>
+      <div className="p-6 border-b border-slate-800 flex items-center gap-3">
+        <GraduationCap className="text-blue-400 w-8 h-8 shrink-0" />
+        <h1 className="text-xl font-bold tracking-tight text-blue-400 leading-tight">Analista Academy</h1>
       </div>
 
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
