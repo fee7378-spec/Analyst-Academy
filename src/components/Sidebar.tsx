@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user }) => {
     <aside className="w-64 bg-slate-900 text-white h-screen flex flex-col sticky top-0">
       <div className="p-6 border-b border-slate-800 flex items-center gap-3">
         <GraduationCap className="text-blue-400 w-8 h-8 shrink-0" />
-        <h1 className="text-xl font-bold tracking-tight text-blue-400 leading-tight">Analista Academy</h1>
+        <h1 className="text-xl font-bold tracking-tight text-blue-400 leading-tight whitespace-nowrap">Analista Academy</h1>
       </div>
 
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
