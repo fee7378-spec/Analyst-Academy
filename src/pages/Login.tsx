@@ -73,8 +73,8 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-full blur-3xl" />
       </div>
 
       <motion.div 
@@ -82,9 +82,9 @@ export const Login: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl">
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-lg shadow-lg">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-4 border border-blue-500/30">
+            <div className="w-16 h-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/20 rounded-lg flex items-center justify-center mb-4 border border-blue-500/30">
               <GraduationCap className="w-8 h-8 text-blue-400" />
             </div>
             <h1 className="text-2xl font-bold text-white">Analista Academy</h1>
@@ -113,7 +113,7 @@ export const Login: React.FC = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                       placeholder="seu@email.com"
                       required
                     />
@@ -130,7 +130,7 @@ export const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold py-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white border border-blue-500 font-bold py-3 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-slate-500/10 flex items-center justify-center gap-2"
                 >
                   {loading ? 'Verificando...' : 'Continuar'}
                   <ArrowRight className="w-5 h-5" />
@@ -164,7 +164,7 @@ export const Login: React.FC = () => {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                       placeholder="••••••••"
                       required
                       autoFocus
@@ -182,7 +182,7 @@ export const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold py-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white border border-blue-500 font-bold py-3 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-slate-500/10"
                 >
                   {loading ? 'Entrando...' : 'Entrar no Sistema'}
                 </button>
@@ -198,7 +198,7 @@ export const Login: React.FC = () => {
                 onSubmit={handleSetPassword} 
                 className="space-y-6"
               >
-                <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 border border-blue-500/20 p-4 rounded-md">
                   <p className="text-blue-400 text-xs font-medium leading-relaxed">
                     Este é seu primeiro acesso! Para sua segurança, defina uma senha forte para sua conta.
                   </p>
@@ -213,7 +213,7 @@ export const Login: React.FC = () => {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                        className="w-full bg-slate-800 border border-slate-700 rounded-md py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                         placeholder="Mínimo 6 caracteres"
                         required
                         autoFocus
@@ -229,7 +229,7 @@ export const Login: React.FC = () => {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                        className="w-full bg-slate-800 border border-slate-700 rounded-md py-3 pl-10 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                         placeholder="Repita a senha"
                         required
                       />
@@ -247,7 +247,7 @@ export const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold py-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white border border-blue-500 font-bold py-3 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-slate-500/10"
                 >
                   {loading ? 'Salvando...' : 'Definir Senha e Entrar'}
                 </button>

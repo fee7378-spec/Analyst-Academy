@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api, normalizeString } from '../lib/api';
 import { DashboardData, User } from '../types';
 import { 
@@ -13,6 +14,7 @@ import {
   Layers,
   AlertCircle,
   Filter,
+  FilterX,
   Users,
   Award,
   BarChart3,
@@ -80,6 +82,14 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
   const [rawAnalyses, setRawAnalyses] = useState<any[]>([]);
   const [tracks, setTracks] = useState<any[]>([]);
   const [consolidatedData, setConsolidatedData] = useState<any[]>([]);
+
+  const [topbarLeft, setTopbarLeft] = useState<Element | null>(null);
+  const [topbarRight, setTopbarRight] = useState<Element | null>(null);
+
+  useEffect(() => {
+    setTopbarLeft(document.getElementById('topbar-left'));
+    setTopbarRight(document.getElementById('topbar-right'));
+  }, []);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -298,13 +308,13 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 p-8 rounded-2xl text-center">
+      <div className="bg-red-50 border border-red-200 p-8 rounded-lg text-center">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-red-900 mb-2">Erro ao carregar Dashboard</h2>
         <p className="text-red-600 mb-6">{error}</p>
         <button 
           onClick={loadDashboard}
-          className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-xl font-bold transition-all"
+          className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md font-bold transition-all"
         >
           Tentar Novamente
         </button>
@@ -339,41 +349,60 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+      {topbarLeft && createPortal(
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
             {individualMode ? 'Análise Individual' : 'Dashboard de Monitoria'}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            {individualMode ? 'Desempenho detalhado por analista' : 'Visão geral do desempenho e qualidade'}
-          </p>
-        </div>
+        </div>,
+        topbarLeft
+      )}
 
-        <div className="flex flex-wrap justify-end items-center gap-3">
+      {topbarRight && createPortal(
+        <div className="flex items-center gap-3">
           <button 
             onClick={loadDashboard}
             disabled={loading}
-            className="p-2 bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-500 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all"
+            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md transition-all"
             title="Atualizar Dashboard"
           >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
 
           {!individualMode && (
             <>
-              <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              {(filters.track || filters.start_date || filters.end_date) && (
+                <button
+                  onClick={() => {
+                    const now = new Date();
+                    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    setFilters({
+                      track: '',
+                      start_date: formatDate(firstDay),
+                      end_date: formatDate(lastDay)
+                    });
+                  }}
+                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all shrink-0"
+                  title="Limpar Filtros"
+                >
+                  <FilterX className="w-4 h-4" />
+                </button>
+              )}
+
+              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
                 <Layers className="w-4 h-4 text-slate-400" />
                 <select 
                   value={filters.track}
                   onChange={e => setFilters({...filters, track: e.target.value})}
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent appearance-none"
                 >
                   <option value="" className="dark:bg-slate-900">Todas as Esteiras</option>
                   {tracks.map(t => <option key={t.id} value={t.name} className="dark:bg-slate-900">{t.name}</option>)}
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
                 <Filter className="w-4 h-4 text-slate-400" />
                 <input 
                   type="date"
@@ -381,7 +410,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                   onChange={e => setFilters({...filters, start_date: e.target.value})}
                   className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
                 />
-                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
                 <input 
                   type="date"
                   value={filters.end_date}
@@ -389,41 +418,19 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                   className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
                 />
               </div>
-
-              <button 
-                onClick={() => {
-                  const now = new Date();
-                  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-                  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                  const formatDate = (date: Date) => {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    return `${year}-${month}-${day}`;
-                  };
-                  setFilters({
-                    track: '',
-                    analyst_id: '',
-                    start_date: formatDate(firstDay),
-                    end_date: formatDate(lastDay)
-                  });
-                }}
-                className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
-              >
-                Limpar Filtros
-              </button>
             </>
           )}
-        </div>
-      </header>
+        </div>,
+        topbarRight
+      )}
 
       {individualMode && selectedAnalyst && (
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-600 rounded-3xl p-8 text-white shadow-xl shadow-blue-500/20 flex flex-col md:flex-row items-center gap-8"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-8 text-white shadow-md shadow-slate-500/10 flex flex-col md:flex-row items-center gap-8"
         >
-          <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center text-4xl font-bold backdrop-blur-sm">
+          <div className="w-24 h-24 bg-white/20 rounded-md flex items-center justify-center text-4xl font-bold backdrop-blur-sm">
             {selectedAnalyst.name && typeof selectedAnalyst.name === 'string' ? selectedAnalyst.name.charAt(0) : '?'}
           </div>
           <div className="flex-1 text-center md:text-left">
@@ -439,7 +446,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
               </span>
             </div>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center border border-white/10">
+          <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 text-center border border-white/10">
             <p className="text-blue-100 text-xs uppercase font-bold tracking-wider mb-1">Qualidade Geral</p>
             <p className="text-4xl font-black">{qualidade}%</p>
           </div>
@@ -457,9 +464,9 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4"
+                className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4"
               >
-                <div className={`p-3 rounded-xl ${stat.bg} dark:bg-opacity-10`}>
+                <div className={`p-3 rounded-md ${stat.bg} dark:bg-opacity-10`}>
                   <stat.icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
                 <div>
@@ -472,7 +479,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
 
           <div className="grid grid-cols-1 gap-8">
             {/* Evolução Semanal Monitoria */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 relative">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 relative">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-emerald-500" />
                 Evolução Semanal
@@ -539,7 +546,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
                           if (active && payload && payload.length) {
                             const dayData = payload[0].payload;
                             return (
-                              <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-2xl text-xs min-w-[160px]">
+                              <div className="bg-slate-900 p-4 rounded-lg border border-slate-800 shadow-lg text-xs min-w-[160px]">
                                 <p className="font-bold text-white mb-3 text-sm">{dayData.week} - {dayData.date}</p>
                                 <div className="space-y-2 mb-3">
                                   <div className="flex justify-between items-center gap-4">
@@ -587,7 +594,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
 
             <div className="grid grid-cols-1 gap-8">
               {/* Ranking de Tags de Erro */}
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                   <Award className="w-5 h-5 text-red-500" />
                   Tags de Erro
@@ -646,7 +653,7 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
       </div>
       {weekTooltip && weekTooltip.show && (
         <div 
-          className="fixed z-50 pointer-events-none bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-2xl min-w-[160px] animate-in fade-in zoom-in-95 duration-200"
+          className="fixed z-50 pointer-events-none bg-slate-900 p-4 rounded-lg border border-slate-800 shadow-lg min-w-[160px] animate-in fade-in zoom-in-95 duration-200"
           style={{ left: weekTooltip.x + 15, top: weekTooltip.y + 15 }}
         >
           <p className="font-bold text-white mb-3 text-sm">{weekTooltip.week}</p>

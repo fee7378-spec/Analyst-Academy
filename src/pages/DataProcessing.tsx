@@ -287,7 +287,7 @@ export const DataProcessing: React.FC = () => {
           <p className="text-slate-500 dark:text-slate-400">Carregue e consolide as bases de tabulação PJ e PF</p>
         </div>
         {lastProcessingDate && (
-          <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
+          <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-md">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
               <RefreshCw className="w-4 h-4" />
             </div>
@@ -310,7 +310,7 @@ export const DataProcessing: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Configurações de Colunas */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-lg p-6 shadow-sm border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                 <Settings2 className="w-5 h-5" />
@@ -325,7 +325,7 @@ export const DataProcessing: React.FC = () => {
                   type="text"
                   value={columns.name}
                   onChange={e => setColumns({...columns, name: e.target.value.toUpperCase()})}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all uppercase"
+                  className="w-full px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all uppercase"
                   placeholder="Ex: A"
                 />
               </div>
@@ -335,7 +335,7 @@ export const DataProcessing: React.FC = () => {
                   type="text"
                   value={columns.date}
                   onChange={e => setColumns({...columns, date: e.target.value.toUpperCase()})}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all uppercase"
+                  className="w-full px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all uppercase"
                   placeholder="Ex: B"
                 />
               </div>
@@ -345,7 +345,7 @@ export const DataProcessing: React.FC = () => {
                   type="text"
                   value={columns.track}
                   onChange={e => setColumns({...columns, track: e.target.value.toUpperCase()})}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all uppercase"
+                  className="w-full px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all uppercase"
                   placeholder="Ex: F"
                 />
               </div>
@@ -355,7 +355,7 @@ export const DataProcessing: React.FC = () => {
               <button
                 onClick={handleConsolidate}
                 disabled={!files.pj && !files.pf}
-                className="w-full mt-8 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                className="w-full mt-8 bg-slate-800 hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-700 disabled:bg-slate-300 text-white py-3 rounded-md font-bold transition-all shadow-lg shadow-slate-500/10 flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 Consolidar Bases
@@ -378,7 +378,7 @@ export const DataProcessing: React.FC = () => {
                 <button
                   onClick={() => setShowDeleteModal(true)}
                   disabled={isDeleting}
-                  className="w-full bg-white dark:bg-slate-900 border-2 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full bg-white dark:bg-slate-900 border-2 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 py-3 rounded-md font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <Trash2 className="w-5 h-5" />
                   Excluir Base Consolidada
@@ -396,7 +396,7 @@ export const DataProcessing: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white dark:bg-slate-900 rounded-2xl p-8 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-800"
+                className="bg-white dark:bg-slate-900 rounded-lg p-8 max-w-md w-full shadow-lg border border-slate-100 dark:border-slate-800"
               >
                 <div className="flex flex-col items-center text-center">
                   <div className="p-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full mb-6">
@@ -410,14 +410,14 @@ export const DataProcessing: React.FC = () => {
                     <button
                       onClick={() => setShowDeleteModal(false)}
                       disabled={isDeleting}
-                      className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                      className="px-6 py-3 rounded-md font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleDeleteConsolidated}
                       disabled={isDeleting}
-                      className="px-6 py-3 rounded-xl font-bold bg-red-500 hover:bg-red-600 text-white transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="px-6 py-3 rounded-md font-bold bg-red-500 hover:bg-red-600 text-white transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {isDeleting ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -439,7 +439,7 @@ export const DataProcessing: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* PJ Upload */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-lg p-6 shadow-sm border border-slate-100 dark:border-slate-800">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg">
@@ -458,7 +458,7 @@ export const DataProcessing: React.FC = () => {
                 <label 
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => handleDrop(e, 'pj')}
-                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
+                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                     <Upload className="w-8 h-8 text-slate-400 mb-3" />
@@ -468,7 +468,7 @@ export const DataProcessing: React.FC = () => {
                 </label>
               ) : (
                 <div className="space-y-4">
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-100 dark:border-slate-700">
                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{files.pj.name}</p>
                     <p className="text-xs text-slate-500">{files.pj.sheets.length} sheets encontradas</p>
                   </div>
@@ -496,7 +496,7 @@ export const DataProcessing: React.FC = () => {
             </div>
 
             {/* PF Upload */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-lg p-6 shadow-sm border border-slate-100 dark:border-slate-800">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
@@ -515,7 +515,7 @@ export const DataProcessing: React.FC = () => {
                 <label 
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => handleDrop(e, 'pf')}
-                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
+                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                     <Upload className="w-8 h-8 text-slate-400 mb-3" />
@@ -525,7 +525,7 @@ export const DataProcessing: React.FC = () => {
                 </label>
               ) : (
                 <div className="space-y-4">
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-100 dark:border-slate-700">
                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{files.pf.name}</p>
                     <p className="text-xs text-slate-500">{files.pf.sheets.length} sheets encontradas</p>
                   </div>
@@ -554,7 +554,7 @@ export const DataProcessing: React.FC = () => {
           </div>
 
           {loading && (
-            <div className="flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800">
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                 <p className="text-slate-500 font-medium">Processando arquivos...</p>

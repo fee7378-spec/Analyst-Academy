@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api, normalizeString } from '../lib/api';
 import { Analysis, User, AnalysisStatus } from '../types';
 import { 
   Search, 
   Filter, 
+  FilterX,
   Plus, 
   MoreVertical, 
   Edit2, 
@@ -127,9 +129,20 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const [analysisToDelete, setAnalysisToDelete] = useState<number | null>(null);
   const [viewingAnalysis, setViewingAnalysis] = useState<Analysis | null>(null);
 
+  const [topbarLeft, setTopbarLeft] = useState<Element | null>(null);
+  const [topbarRight, setTopbarRight] = useState<Element | null>(null);
+
+  useEffect(() => {
+    setTopbarLeft(document.getElementById('topbar-left'));
+    setTopbarRight(document.getElementById('topbar-right'));
+  }, []);
+
   useEffect(() => {
     loadData();
-  }, [mode]);
+    if (location.state?.trackName && mode === 'form') {
+      setFormData(prev => ({ ...prev, track: location.state.trackName }));
+    }
+  }, [mode, location.state]);
 
   const loadData = async () => {
     setLoading(true);
@@ -601,32 +614,96 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
 
   return (
     <div className="space-y-6">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+      {topbarLeft && createPortal(
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
             {showForm ? (editingAnalysis ? 'Editar Monitoria' : 'Nova Monitoria') : 'Histórico de Monitorias'}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            {showForm ? 'Preencha os dados da monitoria abaixo' : 'Visualize e gerencie todas as monitorias realizadas'}
-          </p>
-        </div>
-        {!showForm && canEditNovaMonitoria && (
+          {!showForm && canEditNovaMonitoria && (
+            <button 
+              onClick={() => { 
+                if (mode === 'list') {
+                  navigate('/nova-analise');
+                } else {
+                  setShowForm(true); 
+                  resetForm(); 
+                }
+              }}
+              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-3 py-1.5 rounded-md flex items-center gap-2 transition-all text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Nova
+            </button>
+          )}
+        </div>,
+        topbarLeft
+      )}
+
+      {topbarRight && !showForm && createPortal(
+        <div className="flex items-center gap-3">
           <button 
-            onClick={() => { 
-              if (mode === 'list') {
-                navigate('/nova-analise');
-              } else {
-                setShowForm(true); 
-                resetForm(); 
-              }
-            }}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+            onClick={loadData}
+            disabled={loading}
+            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md transition-all"
+            title="Atualizar Histórico"
           >
-            <Plus className="w-5 h-5" />
-            Nova Monitoria
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-        )}
-      </header>
+
+          {(searchTerm || dateFilter.start || dateFilter.end || statusFilter) && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setDateFilter({ start: '', end: '' });
+                setStatusFilter('');
+              }}
+              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all shrink-0"
+              title="Limpar Filtros"
+            >
+              <FilterX className="w-4 h-4" />
+            </button>
+          )}
+          
+          <div className="relative w-64 shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+              type="text"
+              placeholder={segment === 'PF' ? "Buscar..." : "Buscar por empresa, demanda ou analista..."}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <input 
+              type="date"
+              value={dateFilter.start}
+              onChange={e => setDateFilter({...dateFilter, start: e.target.value})}
+              className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
+            />
+            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <input 
+              type="date"
+              value={dateFilter.end}
+              onChange={e => setDateFilter({...dateFilter, end: e.target.value})}
+              className="text-sm font-medium text-slate-600 dark:text-slate-300 outline-none bg-transparent"
+            />
+          </div>
+
+          <select 
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white shrink-0 appearance-none"
+          >
+            <option value="" className="dark:bg-slate-900">Todos os Erros</option>
+            <option value="Não" className="dark:bg-slate-900">Sem Erro</option>
+            <option value="Sim" className="dark:bg-slate-900">Com Erro</option>
+          </select>
+        </div>,
+        topbarRight
+      )}
 
       <AnimatePresence mode="wait">
         {showForm ? (
@@ -667,9 +744,9 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
 
                     setFormData({ ...formData, track: track.name, demand_type: demandType });
                   }}
-                  className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:border-blue-500/30 transition-all group text-left flex flex-col items-center justify-center gap-4"
+                  className="bg-white dark:bg-slate-900 p-8 rounded-md shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-blue-500/30 transition-all group text-left flex flex-col items-center justify-center gap-4"
                 >
-                  <div className={`p-4 rounded-2xl ${iconData.color} group-hover:scale-110 transition-transform`}>
+                  <div className={`p-4 rounded-lg ${iconData.color} group-hover:scale-110 transition-transform`}>
                     <Icon className="w-10 h-10" />
                   </div>
                   <div className="text-center">
@@ -701,11 +778,11 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 max-w-3xl mx-auto"
+              className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-md shadow-sm border border-slate-100 dark:border-slate-800 max-w-3xl mx-auto"
             >
               <div className="mb-10 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-8">
                 <div className="flex items-center gap-5">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl">
+                  <div className="p-4 bg-blue-50 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-lg">
                     <Layers className="w-8 h-8 text-blue-500" />
                   </div>
                   <div>
@@ -727,7 +804,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     disabled
                     type="text"
                     value={formData.monitor_name}
-                    className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                    className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base text-slate-500 dark:text-slate-400 cursor-not-allowed"
                   />
                 </div>
 
@@ -738,7 +815,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     <button
                       type="button"
                       onClick={() => setIsAnalystDropdownOpen(!isAnalystDropdownOpen)}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base flex items-center justify-between focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-left dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base flex items-center justify-between focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-left dark:text-white"
                     >
                       <span className={formData.analyst_id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
                         {formData.analyst_id 
@@ -764,7 +841,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto"
+                            className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-lg shadow-lg overflow-hidden max-h-64 overflow-y-auto"
                           >
                             {analysts.length > 0 ? analysts.map(a => (
                               <button
@@ -803,7 +880,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       type="text"
                       value={formData.company_name}
                       onChange={e => setFormData({...formData, company_name: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
                       placeholder={segment === 'PF' ? 'Nome' : 'Nome da empresa'}
                     />
                   </div>
@@ -817,7 +894,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       type="text"
                       value={formData.cnpj}
                       onChange={handleDocumentChange}
-                      className={`w-full bg-slate-50 dark:bg-slate-800/50 border rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white ${formData.cnpj && !validateDocument(formData.cnpj) ? 'border-red-300 dark:border-red-500/50' : 'border-slate-200 dark:border-slate-700'}`}
+                      className={`w-full bg-slate-50 dark:bg-slate-800/50 border rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white ${formData.cnpj && !validateDocument(formData.cnpj) ? 'border-red-300 dark:border-red-500/50' : 'border-slate-200 dark:border-slate-700'}`}
                       placeholder={segment === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
                     />
                     {formData.cnpj && !validateDocument(formData.cnpj) && (
@@ -834,7 +911,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       type="date"
                       value={formData.treatment_date}
                       onChange={e => setFormData({...formData, treatment_date: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
                     />
                   </div>
                 )}
@@ -848,7 +925,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       maxLength={8}
                       value={formData.demand_number}
                       onChange={e => setFormData({...formData, demand_number: e.target.value.replace(/\D/g, '').slice(0, 8)})}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
                       placeholder="12345678"
                     />
                   </div>
@@ -868,7 +945,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                         setFormData({...formData, demand_type: val});
                         setIsOtherDemandType(val === 'Outro');
                       }}
-                      className={`w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white ${
+                      className={`w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white ${
                         (selectedTrack === 'Abertura PJ' || selectedTrack === 'BKO Abertura' || selectedTrack === 'Fatca') ? 'opacity-75 cursor-not-allowed' : ''
                       }`}
                     >
@@ -892,7 +969,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                           type="text"
                           value={otherDemandType}
                           onChange={e => setOtherDemandType(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
+                          className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
                           placeholder="Especifique o tipo de demanda"
                         />
                       </motion.div>
@@ -915,7 +992,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                           status_observation: newStatus === 'Não' ? '' : formData.status_observation
                         });
                       }}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
                     >
                       <option value="Não" className="dark:bg-slate-900">Não</option>
                       <option value="Sim" className="dark:bg-slate-900">Sim</option>
@@ -934,7 +1011,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       required
                       value={formData.tag}
                       onChange={e => setFormData({...formData, tag: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
                     >
                       <option value="" className="dark:bg-slate-900">Selecione uma tag</option>
                       {currentTags.map(tag => (
@@ -955,7 +1032,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       value={formData.status_observation}
                       onChange={e => setFormData({...formData, status_observation: e.target.value})}
                       rows={1}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all min-h-[48px] resize-y dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-5 py-3 text-base focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all min-h-[48px] resize-y dark:text-white"
                       placeholder="Descreva o erro encontrado"
                     />
                   </motion.div>
@@ -973,14 +1050,14 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       setSelectedTrack(null);
                     }
                   }}
-                  className="px-8 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold text-base"
+                  className="px-8 py-3.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold text-base"
                 >
                   Cancelar
                 </button>
                 <button 
                   type="submit"
                   disabled={submitting}
-                  className="px-12 py-3.5 rounded-2xl bg-blue-500 text-white hover:bg-blue-600 transition-all font-bold text-base shadow-xl shadow-blue-500/20 disabled:opacity-50"
+                  className="px-12 py-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm transition-all font-bold text-base shadow-md shadow-slate-500/10 disabled:opacity-50"
                 >
                   {submitting ? (
                     <div className="flex items-center gap-2">
@@ -1002,58 +1079,13 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
             animate={{ opacity: 1 }}
             className="space-y-4"
           >
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="text"
-                  placeholder={segment === 'PF' ? "Buscar por nome, demanda ou analista..." : "Buscar por empresa, demanda ou analista..."}
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={loadData}
-                  disabled={loading}
-                  className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-all"
-                  title="Atualizar Histórico"
-                >
-                  <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5">
-                  <Filter className="w-4 h-4 text-slate-400" />
-                  <input 
-                    type="date"
-                    value={dateFilter.start}
-                    onChange={e => setDateFilter({...dateFilter, start: e.target.value})}
-                    className="bg-transparent text-xs outline-none dark:text-white"
-                  />
-                  <span className="text-slate-300 dark:text-slate-700">|</span>
-                  <input 
-                    type="date"
-                    value={dateFilter.end}
-                    onChange={e => setDateFilter({...dateFilter, end: e.target.value})}
-                    className="bg-transparent text-xs outline-none dark:text-white"
-                  />
-                </div>
-                <select 
-                  value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value)}
-                  className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
-                >
-                  <option value="" className="dark:bg-slate-900">Todos os Erros</option>
-                  <option value="Não" className="dark:bg-slate-900">Não</option>
-                  <option value="Sim" className="dark:bg-slate-900">Sim</option>
-                </select>
-              </div>
+            <div className="flex flex-wrap gap-4 items-center justify-end mb-4">
               {canViewHistorico && (
                 <div className="flex gap-2">
                   {canClearHistorico && (
                     <button 
                       onClick={() => setShowClearModal(true)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-red-500/20 text-sm font-bold"
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-red-500/20 text-sm font-bold"
                     >
                       <Trash2 className="w-4 h-4" />
                       Limpar Histórico
@@ -1061,14 +1093,14 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   )}
                   <button 
                     onClick={handleExport}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 text-sm font-bold"
+                    className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-slate-500/10 text-sm font-bold"
                   >
                     <Download className="w-4 h-4" />
                     Exportar
                   </button>
                   <button 
                     onClick={() => setShowImportModal(true)}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 text-sm font-bold"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 text-sm font-bold"
                   >
                     <Upload className="w-4 h-4" />
                     Importar
@@ -1077,7 +1109,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               )}
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -1126,7 +1158,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                         <td className="px-6 py-4 text-right">
                           <button 
                             onClick={() => setViewingAnalysis(analysis)}
-                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all"
+                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-lg transition-all"
                             title="Ver Detalhes"
                           >
                             <Info className="w-5 h-5" />
@@ -1148,7 +1180,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                 <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-center">
                   <button
                     onClick={() => setVisibleCount(prev => prev + 20)}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition-all rounded-xl font-bold text-sm"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:text-white transition-all rounded-md font-bold text-sm"
                   >
                     <RefreshCw className="w-4 h-4" />
                     Carregar mais 20 monitorias
@@ -1179,7 +1211,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+              className="bg-white dark:bg-slate-800 rounded-lg shadow-md w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
             >
               <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
                 <div className="flex items-center gap-3">
@@ -1281,7 +1313,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   {viewingAnalysis.status === 'Sim' && (
                     <div>
                       <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block mb-1">Detalhes do Erro Encontrado</span>
-                      <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30 text-red-800 dark:text-red-200 whitespace-pre-wrap">
+                      <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-md border border-red-100 dark:border-red-900/30 text-red-800 dark:text-red-200 whitespace-pre-wrap">
                         {viewingAnalysis.status_observation || 'Nenhum detalhe adicional sobre o erro.'}
                       </div>
                     </div>
@@ -1301,7 +1333,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                           setAnalysisToDelete(viewingAnalysis.id);
                           setViewingAnalysis(null);
                         }}
-                        className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors font-medium flex items-center gap-2"
+                        className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors font-medium flex items-center gap-2"
                       >
                         <Trash2 className="w-4 h-4" />
                         Excluir
@@ -1311,7 +1343,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                           handleEdit(viewingAnalysis);
                           setViewingAnalysis(null);
                         }}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium flex items-center gap-2"
+                        className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-blue-700 text-white rounded-md transition-colors font-medium flex items-center gap-2"
                       >
                         <Edit2 className="w-4 h-4" />
                         Editar
@@ -1321,7 +1353,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   {!canEditHistorico && (
                     <button
                       onClick={() => setViewingAnalysis(null)}
-                      className="px-6 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded-xl transition-colors font-medium"
+                      className="px-6 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded-md transition-colors font-medium"
                     >
                       Fechar
                     </button>
@@ -1340,7 +1372,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+              className="bg-white dark:bg-slate-800 rounded-lg shadow-md w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -1356,7 +1388,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   <select
                     value={clearPeriod}
                     onChange={(e) => setClearPeriod(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none"
+                    className="w-full px-4 py-3 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none"
                   >
                     <option value="7">Mais antigos que 7 dias</option>
                     <option value="15">Mais antigos que 15 dias</option>
@@ -1373,7 +1405,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   <button
                     type="button"
                     onClick={() => setShowClearModal(false)}
-                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors font-semibold"
+                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors font-semibold"
                   >
                     Cancelar
                   </button>
@@ -1381,7 +1413,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     type="button"
                     onClick={handleClearHistory}
                     disabled={clearing}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl transition-colors font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {clearing ? 'Apagando...' : 'Confirmar'}
                   </button>
@@ -1397,7 +1429,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md border border-slate-100 dark:border-slate-800 overflow-hidden"
+              className="bg-white dark:bg-slate-900 rounded-md shadow-lg w-full max-w-md border border-slate-100 dark:border-slate-800 overflow-hidden"
             >
               <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1413,7 +1445,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
               </div>
               
               <div className="p-6 space-y-6">
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-500/20">
+                <div className="bg-blue-50 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 p-4 rounded-lg border border-blue-100 dark:border-blue-500/20">
                   <h3 className="text-sm font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2">
                     <Info className="w-4 h-4" />
                     Instruções para Importação
@@ -1430,7 +1462,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   <button
                     type="button"
                     onClick={downloadTemplate}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all font-bold text-sm"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md transition-all font-bold text-sm"
                   >
                     <Download className="w-4 h-4" />
                     Baixar Modelo CSV
@@ -1449,7 +1481,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                       htmlFor="csv-upload"
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={handleDropCSV}
-                      className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-8 bg-emerald-50 dark:bg-emerald-500/5 border-2 border-dashed border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl transition-all font-bold cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-8 bg-emerald-50 dark:bg-emerald-500/5 border-2 border-dashed border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg transition-all font-bold cursor-pointer ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {importing ? (
                         <>

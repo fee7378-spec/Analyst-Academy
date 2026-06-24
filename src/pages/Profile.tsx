@@ -93,7 +93,7 @@ export const Profile: React.FC = () => {
         <button 
           type="button"
           onClick={toggleDarkMode}
-          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+          className="p-3 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
           title={isDark ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
         >
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -102,8 +102,8 @@ export const Profile: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
-            <div className="w-24 h-24 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-md shadow-sm border border-slate-100 dark:border-slate-800 text-center">
+            <div className="w-24 h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
               <UserIcon className="w-12 h-12 text-blue-500" />
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">{user.name}</h2>
@@ -113,7 +113,7 @@ export const Profile: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-slate-900 p-6 rounded-3xl shadow-lg text-white">
+          <div className="bg-slate-900 p-6 rounded-md shadow-lg text-white">
             <h3 className="font-bold mb-4 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-blue-400" />
               Informações
@@ -131,7 +131,7 @@ export const Profile: React.FC = () => {
         </div>
 
         <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-md shadow-sm border border-slate-100 dark:border-slate-800">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
               <History className="w-5 h-5 text-blue-500" />
               Atividade Recente
@@ -142,9 +142,9 @@ export const Profile: React.FC = () => {
                 logs.map((log, index) => (
                   <div 
                     key={index}
-                    className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50"
+                    className="flex items-start gap-4 p-4 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50"
                   >
-                    <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+                    <div className="p-2 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 text-blue-500">
                       <Activity className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">

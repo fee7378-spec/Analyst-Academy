@@ -24,7 +24,7 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-md shadow-md w-full max-w-md overflow-hidden">
         <div className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">

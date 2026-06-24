@@ -132,14 +132,14 @@ export const Logs: React.FC = () => {
           <div className="flex gap-2">
             <button 
               onClick={() => setShowClearModal(true)}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-red-500/20 text-sm font-bold"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-red-500/20 text-sm font-bold"
             >
               <Trash2 className="w-5 h-5" />
               Limpar Logs
             </button>
             <button 
               onClick={handleExport}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 text-sm font-bold"
+              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-slate-500/10 text-sm font-bold"
             >
               <Download className="w-5 h-5" />
               Exportar Logs
@@ -148,11 +148,11 @@ export const Logs: React.FC = () => {
         )}
       </header>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center">
         <button 
           onClick={loadLogs}
           disabled={loading}
-          className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-all"
+          className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md transition-all"
           title="Atualizar Logs"
         >
           <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
@@ -164,10 +164,10 @@ export const Logs: React.FC = () => {
             placeholder="Buscar por usuário, módulo ou ID..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
           />
         </div>
-        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5">
+        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-1.5">
           <Filter className="w-4 h-4 text-slate-400" />
           <input 
             type="date"
@@ -188,7 +188,7 @@ export const Logs: React.FC = () => {
           <select 
             value={actionFilter}
             onChange={e => setActionFilter(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
+            className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
           >
             <option value="" className="dark:bg-slate-900">Todas as Ações</option>
             <option className="dark:bg-slate-900">Criação</option>
@@ -199,7 +199,7 @@ export const Logs: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -258,7 +258,7 @@ export const Logs: React.FC = () => {
           <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-center">
             <button
               onClick={() => setVisibleCount(prev => prev + 20)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition-all rounded-xl font-bold text-sm"
+              className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:text-white transition-all rounded-md font-bold text-sm"
             >
               <RefreshCw className="w-4 h-4" />
               Carregar mais 20 logs
@@ -274,7 +274,7 @@ export const Logs: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+              className="bg-white dark:bg-slate-800 rounded-lg shadow-md w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -290,7 +290,7 @@ export const Logs: React.FC = () => {
                   <select
                     value={clearPeriod}
                     onChange={(e) => setClearPeriod(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none"
+                    className="w-full px-4 py-3 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none"
                   >
                     <option value="7">Mais antigos que 7 dias</option>
                     <option value="15">Mais antigos que 15 dias</option>
@@ -307,7 +307,7 @@ export const Logs: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowClearModal(false)}
-                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors font-semibold"
+                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors font-semibold"
                   >
                     Cancelar
                   </button>
@@ -315,7 +315,7 @@ export const Logs: React.FC = () => {
                     type="button"
                     onClick={handleClearLogs}
                     disabled={clearing}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl transition-colors font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {clearing ? 'Apagando...' : 'Confirmar'}
                   </button>

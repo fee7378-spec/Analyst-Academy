@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api, normalizeString } from '../lib/api';
 import { User } from '../types';
 import { 
@@ -62,6 +63,15 @@ export const Analysts: React.FC = () => {
   const [editingAnalyst, setEditingAnalyst] = useState<User | null>(null);
   const [analystToDelete, setAnalystToDelete] = useState<number | null>(null);
   const [tracks, setTracks] = useState<any[]>([]);
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  const [topbarLeft, setTopbarLeft] = useState<Element | null>(null);
+  const [topbarRight, setTopbarRight] = useState<Element | null>(null);
+
+  useEffect(() => {
+    setTopbarLeft(document.getElementById('topbar-left'));
+    setTopbarRight(document.getElementById('topbar-right'));
+  }, []);
   const [consolidatedData, setConsolidatedData] = useState<any[]>([]);
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
   const [saving, setSaving] = useState(false);
@@ -345,92 +355,117 @@ export const Analysts: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Analistas</h1>
-          <p className="text-slate-500 dark:text-slate-400">Cadastre e gerencie os perfis dos analistas em treinamento</p>
-        </div>
-        {canEdit && (
+      {topbarLeft && createPortal(
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Analistas</h1>
+          {canEdit && (
+            <button 
+              onClick={() => { setShowModal(true); setEditingAnalyst(null); resetForm(); }}
+              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-3 py-1.5 rounded-md flex items-center gap-2 transition-all text-sm font-medium"
+            >
+              <UserPlus className="w-4 h-4" />
+              Novo
+            </button>
+          )}
+        </div>,
+        topbarLeft
+      )}
+
+      {topbarRight && createPortal(
+        <div className="flex items-center gap-3">
           <button 
-            onClick={() => { setShowModal(true); setEditingAnalyst(null); resetForm(); }}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+            onClick={loadData}
+            disabled={loading}
+            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md transition-all"
+            title="Atualizar Analistas"
           >
-            <UserPlus className="w-5 h-5" />
-            Novo Analista
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-        )}
-      </header>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4">
-        <button 
-          onClick={loadData}
-          disabled={loading}
-          className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-all"
-          title="Atualizar Analistas"
-        >
-          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input 
-            type="text"
-            placeholder="Buscar por nome ou matrícula..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
-          />
-        </div>
-        <div className="relative w-64 shrink-0">
-          <select
-            value={selectedTrackFilter}
-            onChange={(e) => setSelectedTrackFilter(e.target.value)}
-            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white appearance-none"
-          >
-            <option value="">Todas as Esteiras</option>
-            {tracks.map(t => (
-              <option key={t.id} value={t.name}>{t.name}</option>
-            ))}
-          </select>
-        </div>
-        {(searchTerm || selectedTrackFilter) && (
-          <button
-            onClick={() => {
-              setSearchTerm('');
-              setSelectedTrackFilter('');
-            }}
-            className="px-4 py-2 text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all flex items-center gap-2 shrink-0"
-          >
-            <FilterX className="w-4 h-4" />
-            Limpar Filtros
-          </button>
-        )}
-      </div>
+          {(searchTerm || selectedTrackFilter) && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedTrackFilter('');
+              }}
+              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all shrink-0"
+              title="Limpar Filtros"
+            >
+              <FilterX className="w-4 h-4" />
+            </button>
+          )}
+          
+          <div className="relative w-48 shrink-0">
+            <select
+              value={selectedTrackFilter}
+              onChange={(e) => setSelectedTrackFilter(e.target.value)}
+              className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white appearance-none"
+            >
+              <option value="">Todas as Esteiras</option>
+              {tracks.map(t => (
+                <option key={t.id} value={t.name}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
+            />
+          </div>
+        </div>,
+        topbarRight
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAnalysts.map((analyst, index) => (
-          <motion.div
-            key={analyst.id || `analyst-${index}`}
-            layout
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-all group relative overflow-hidden"
-          >
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-xl font-bold text-slate-400 dark:text-slate-600 shrink-0">
-                  {analyst.name && typeof analyst.name === 'string' ? analyst.name.charAt(0) : '?'}
+      <div className="flex flex-col rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+        <div className="flex items-center px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="flex-1">Analista</div>
+          <div className="w-48 px-4">Esteira</div>
+          <div className="w-40 px-4">Status de Acesso</div>
+          <div className="w-32 px-4 text-right">Ações</div>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {filteredAnalysts.slice(0, visibleCount).map((analyst, index) => (
+            <motion.div
+              key={analyst.id || `analyst-${index}`}
+              layout
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
+            >
+              <div className="flex-1 flex items-center gap-4 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+                  {analyst.name && typeof analyst.name === 'string' ? `${analyst.name.split(' ')[0][0]}${analyst.name.split(' ').length > 1 ? analyst.name.split(' ')[1][0] : ''}`.toUpperCase() : '?'}
                 </div>
-                <div className="pr-2 min-w-0 flex-1">
+                <div className="min-w-0">
                   <h3 className="font-bold text-slate-900 dark:text-white truncate" title={analyst.name}>{analyst.name}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 truncate" title={`Login: ${analyst.matricula}`}>Login: {analyst.matricula}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5" title={analyst.matricula}>{analyst.matricula}</p>
                 </div>
               </div>
               
-              <div className="flex gap-1 shrink-0 ml-2">
+              <div className="w-48 px-4 shrink-0">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-full">
+                  {analyst.esteira}
+                </span>
+              </div>
+              
+              <div className="w-40 px-4 shrink-0 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  TUDO OK
+                </span>
+              </div>
+
+              <div className="w-32 px-4 shrink-0 flex items-center justify-end gap-1">
                 {canViewStats && (
                   <button 
                     onClick={() => { setSelectedAnalyst(analyst); setShowStatsModal(true); }}
-                    className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all"
+                    className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-all"
                     title="Ver Produtividade e Qualidade"
                   >
                     <BarChart3 className="w-4 h-4" />
@@ -440,34 +475,39 @@ export const Analysts: React.FC = () => {
                   <>
                     <button 
                       onClick={() => handleEdit(analyst)}
-                      className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all"
+                      className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-all"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button 
                       onClick={() => setAnalystToDelete(analyst.id)}
-                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </>
                 )}
               </div>
+            </motion.div>
+          ))}
+          {filteredAnalysts.length === 0 && !loading && (
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+              Nenhum analista encontrado.
             </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-                <Briefcase className="w-4 h-4 text-slate-400 dark:text-slate-600" />
-                Esteira: {analyst.esteira}
-              </div>
-              <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-                <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-600" />
-                Admissão: {analyst.admission_date ? formatLocalDate(analyst.admission_date) : 'N/A'}
-              </div>
-            </div>
-          </motion.div>
-        ))}
+          )}
+        </div>
       </div>
+
+      {visibleCount < filteredAnalysts.length && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => setVisibleCount(prev => prev + 20)}
+            className="px-6 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium shadow-sm"
+          >
+            Carregar mais analistas
+          </button>
+        </div>
+      )}
 
       <AnimatePresence>
         {showModal && (
@@ -483,7 +523,7 @@ export const Analysts: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
+              className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-md shadow-lg overflow-hidden border border-slate-100 dark:border-slate-800"
             >
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -502,7 +542,7 @@ export const Analysts: React.FC = () => {
                     type="text"
                     value={formData.name || ''}
                     onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white uppercase"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white uppercase"
                   />
                 </div>
                 <div className="space-y-2">
@@ -512,7 +552,7 @@ export const Analysts: React.FC = () => {
                     type="text"
                     value={formData.matricula || ''}
                     onChange={e => setFormData({...formData, matricula: e.target.value.toUpperCase()})}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                   />
                 </div>
                 <div className="space-y-2">
@@ -521,7 +561,7 @@ export const Analysts: React.FC = () => {
                     required
                     value={formData.esteira || ''}
                     onChange={e => setFormData({...formData, esteira: e.target.value})}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                   >
                     {tracks.map(t => (
                       <option key={t.id} value={t.name} className="dark:bg-slate-900">{t.name}</option>
@@ -534,7 +574,7 @@ export const Analysts: React.FC = () => {
                     type="date"
                     value={formData.admission_date || ''}
                     onChange={e => setFormData({...formData, admission_date: e.target.value})}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                   />
                 </div>
 
@@ -542,14 +582,14 @@ export const Analysts: React.FC = () => {
                   <button 
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium"
+                    className="px-6 py-2.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium"
                   >
                     Cancelar
                   </button>
                   <button 
                     type="submit"
                     disabled={saving}
-                    className="px-8 py-2.5 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                    className="px-8 py-2.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm transition-all font-bold shadow-lg shadow-slate-500/10 disabled:opacity-50"
                   >
                     {saving ? 'Salvando...' : (editingAnalyst ? 'Atualizar Analista' : 'Salvar Analista')}
                   </button>
@@ -574,11 +614,11 @@ export const Analysts: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-6xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 my-8"
+              className="relative w-full max-w-6xl bg-white dark:bg-slate-900 rounded-md shadow-lg overflow-hidden border border-slate-100 dark:border-slate-800 my-8"
             >
               <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                  <div className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center text-white shadow-lg shadow-slate-500/10">
                     <BarChart3 className="w-6 h-6" />
                   </div>
                   <div>
@@ -600,8 +640,8 @@ export const Analysts: React.FC = () => {
               <div className="p-6 max-h-[calc(100vh-120px)] overflow-y-auto">
                   {/* Stats Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div className="p-4 bg-yellow-50 dark:bg-yellow-500/10 rounded-2xl border border-yellow-100 dark:border-yellow-500/20 flex items-center gap-4">
-                      <div className="p-2 bg-yellow-100 dark:bg-yellow-500/20 rounded-xl text-yellow-600 dark:text-yellow-400">
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-500/10 rounded-lg border border-yellow-100 dark:border-yellow-500/20 flex items-center gap-4">
+                      <div className="p-2 bg-yellow-100 dark:bg-yellow-500/20 rounded-md text-yellow-600 dark:text-yellow-400">
                         <TrendingUp className="w-5 h-5" />
                       </div>
                       <div>
@@ -609,8 +649,8 @@ export const Analysts: React.FC = () => {
                         <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{getAnalystStats(selectedAnalyst).productivity}</p>
                       </div>
                     </div>
-                    <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-2xl border border-purple-100 dark:border-purple-500/20 flex items-center gap-4">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-xl text-purple-600 dark:text-purple-400">
+                    <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg border border-purple-100 dark:border-purple-500/20 flex items-center gap-4">
+                      <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-md text-purple-600 dark:text-purple-400">
                         <FileText className="w-5 h-5" />
                       </div>
                       <div>
@@ -618,8 +658,8 @@ export const Analysts: React.FC = () => {
                         <p className="text-2xl font-bold text-purple-900 dark:text-blue-100">{getAnalystStats(selectedAnalyst).monitorings}</p>
                       </div>
                     </div>
-                    <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 flex items-center gap-4">
-                      <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400">
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-100 dark:border-emerald-500/20 flex items-center gap-4">
+                      <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md text-emerald-600 dark:text-emerald-400">
                         <Award className="w-5 h-5" />
                       </div>
                       <div>
@@ -627,8 +667,8 @@ export const Analysts: React.FC = () => {
                         <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">{getAnalystStats(selectedAnalyst).quality}%</p>
                       </div>
                     </div>
-                    <div className="p-4 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20 flex items-center gap-4">
-                      <div className="p-2 bg-red-100 dark:bg-red-500/20 rounded-xl text-red-600 dark:text-red-400">
+                    <div className="p-4 bg-red-50 dark:bg-red-500/10 rounded-lg border border-red-100 dark:border-red-500/20 flex items-center gap-4">
+                      <div className="p-2 bg-red-100 dark:bg-red-500/20 rounded-md text-red-600 dark:text-red-400">
                         <AlertCircle className="w-5 h-5" />
                       </div>
                       <div>
@@ -641,7 +681,7 @@ export const Analysts: React.FC = () => {
                 {/* Charts */}
                 <div className="space-y-6">
                   {/* Monitorias vs Erros */}
-                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 relative">
+                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 relative">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-blue-500" />
                       Monitorias vs Erros
@@ -708,7 +748,7 @@ export const Analysts: React.FC = () => {
                               if (active && payload && payload.length) {
                                 const dayData = payload[0].payload;
                                 return (
-                                  <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-2xl text-xs min-w-[160px]">
+                                  <div className="bg-slate-900 p-4 rounded-lg border border-slate-800 shadow-lg text-xs min-w-[160px]">
                                     <p className="font-bold text-white mb-3 text-sm">{dayData.week} - {dayData.date}</p>
                                     <div className="space-y-2">
                                       <div className="flex justify-between items-center gap-4">
@@ -754,7 +794,7 @@ export const Analysts: React.FC = () => {
                   </div>
 
                   {/* Produtividade Diária */}
-                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 relative">
+                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 relative">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-yellow-500" />
                       Produtividade Diária
@@ -819,7 +859,7 @@ export const Analysts: React.FC = () => {
                               if (active && payload && payload.length) {
                                 const dayData = payload[0].payload;
                                 return (
-                                  <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-2xl text-xs min-w-[160px]">
+                                  <div className="bg-slate-900 p-4 rounded-lg border border-slate-800 shadow-lg text-xs min-w-[160px]">
                                     <p className="font-bold text-white mb-3 text-sm">{dayData.week} - {dayData.date}</p>
                                     <div className="space-y-2">
                                       <div className="flex justify-between items-center gap-4">
@@ -858,7 +898,7 @@ export const Analysts: React.FC = () => {
 
                   <div className="grid grid-cols-1 gap-8 pb-6 px-1">
                     {/* Ranking de Tags de Erro */}
-                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                         <Award className="w-5 h-5 text-red-500" />
                         Ranking de Tags de Erro
@@ -935,7 +975,7 @@ export const Analysts: React.FC = () => {
       </AnimatePresence>
       {weekTooltip && weekTooltip.show && (
         <div 
-          className="fixed z-50 pointer-events-none bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-2xl min-w-[160px] animate-in fade-in zoom-in-95 duration-200"
+          className="fixed z-50 pointer-events-none bg-slate-900 p-4 rounded-lg border border-slate-800 shadow-lg min-w-[160px] animate-in fade-in zoom-in-95 duration-200"
           style={{ left: weekTooltip.x + 15, top: weekTooltip.y + 15 }}
         >
           <p className="font-bold text-white mb-3 text-sm">{weekTooltip.week}</p>

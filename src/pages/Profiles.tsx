@@ -144,10 +144,10 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6"
       >
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-md shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
           <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-600">
+              <div className="w-20 h-20 bg-blue-50 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md flex items-center justify-center text-blue-600">
                 <Shield className="w-10 h-10" />
               </div>
               <div className="flex-1">
@@ -158,7 +158,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button 
                 onClick={() => setSelectedTemplate(null)}
-                className="flex-1 md:flex-none px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium"
+                className="flex-1 md:flex-none px-6 py-2.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium"
               >
                 {canEdit ? 'Voltar' : 'Fechar'}
               </button>
@@ -166,7 +166,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                 <button 
                   onClick={handleSaveTemplate}
                   disabled={saving}
-                  className="flex-1 md:flex-none px-8 py-2.5 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 md:flex-none px-8 py-2.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm transition-all font-bold shadow-lg shadow-slate-500/10 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Save className="w-5 h-5" />
                   {saving ? 'Salvando...' : 'Salvar Template'}
@@ -176,32 +176,32 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
           </div>
 
           <div className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
               {MODULES.map((module) => {
                 const level = selectedTemplate.permissions[module.id as keyof UserPermissions] || 'none';
                 return (
                   <div 
                     key={module.id}
-                    className={`p-5 rounded-2xl border transition-all flex items-center justify-between ${
-                      level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-blue-500/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
+                    className={`p-5 rounded-lg border transition-all flex items-center justify-between ${
+                      level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-xl ${level !== 'none' ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                      <div className={`p-2 rounded-md ${level !== 'none' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
                         <Shield className="w-5 h-5" />
                       </div>
                       <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{module.label}</span>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm">
                       <button
                         onClick={() => handleTemplatePermissionChange(module.id, 'none')}
                         disabled={!canEdit}
                         title="Sem Acesso"
-                        className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
                           level === 'none' 
-                            ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 shadow-sm' 
-                            : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            ? 'bg-slate-500 text-white shadow-sm' 
+                            : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
                         } disabled:opacity-50`}
                       >
                         <EyeOff className="w-4 h-4" />
@@ -211,10 +211,10 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                         onClick={() => handleTemplatePermissionChange(module.id, 'view')}
                         disabled={!canEdit}
                         title="Apenas Visualizar"
-                        className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
                           level === 'view' 
-                            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-sm' 
-                            : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            ? 'bg-blue-600 text-white shadow-sm' 
+                            : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
                         } disabled:opacity-50`}
                       >
                         <Eye className="w-4 h-4" />
@@ -224,10 +224,10 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                         onClick={() => handleTemplatePermissionChange(module.id, 'edit')}
                         disabled={!canEdit}
                         title="Pode Editar"
-                        className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
                           level === 'edit' 
-                            ? 'bg-blue-500 text-white shadow-md' 
-                            : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            ? 'bg-blue-600 text-white shadow-sm' 
+                            : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
                         } disabled:opacity-50`}
                       >
                         <Pencil className="w-4 h-4" />
@@ -251,7 +251,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
         {canEdit && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 font-bold text-sm"
+            className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-slate-500/10 font-bold text-sm"
           >
             <Plus className="w-4 h-4" />
             Novo Template
@@ -261,7 +261,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {templates.map(template => (
-          <div key={template.id} className="group relative bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all overflow-hidden flex flex-col">
+          <div key={template.id} className="group relative bg-white dark:bg-slate-900 rounded-lg p-6 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all overflow-hidden flex flex-col">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -271,7 +271,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
               <div className="flex gap-2 ml-4 shrink-0">
                 <button
                   onClick={() => setSelectedTemplate(template)}
-                  className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-all"
+                  className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md transition-all"
                   title="Editar"
                 >
                   {canEdit ? <Pencil className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -279,7 +279,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                 {canEdit && (
                   <button
                     onClick={() => handleDeleteTemplate(template)}
-                    className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all"
+                    className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all"
                     title="Excluir"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -292,7 +292,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
               <div className="flex-1">
                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Edição</p>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span className="w-2 h-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"></span>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{Object.values(template.permissions).filter(p => p === 'edit').length} Módulos</span>
                 </div>
               </div>
@@ -321,7 +321,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+              className="bg-white dark:bg-slate-800 rounded-lg shadow-md w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -337,7 +337,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                     required
                     value={newTemplate.name}
                     onChange={e => setNewTemplate({...newTemplate, name: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    className="w-full px-4 py-3 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                     placeholder="Ex: Analista Sênior"
                   />
                 </div>
@@ -348,7 +348,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                     required
                     value={newTemplate.description}
                     onChange={e => setNewTemplate({...newTemplate, description: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    className="w-full px-4 py-3 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                     placeholder="Ex: Acesso completo para analistas"
                   />
                 </div>
@@ -357,14 +357,14 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors font-semibold"
+                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors font-semibold"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors font-semibold disabled:opacity-50"
+                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors font-semibold disabled:opacity-50"
                   >
                     {saving ? 'Criando...' : 'Criar Template'}
                   </button>
@@ -639,7 +639,7 @@ export const Profiles: React.FC = () => {
                 });
                 setShowCreateModal(true);
               }}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 font-bold"
+              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-slate-500/10 font-bold"
             >
               <UserPlus className="w-5 h-5" />
               Criar novo usuário
@@ -661,7 +661,7 @@ export const Profiles: React.FC = () => {
           {activeTab === 'users' && (
             <motion.div 
               layoutId="activeTab"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 dark:bg-blue-400"
             />
           )}
         </button>
@@ -677,7 +677,7 @@ export const Profiles: React.FC = () => {
           {activeTab === 'templates' && (
             <motion.div 
               layoutId="activeTab"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 dark:bg-blue-400"
             />
           )}
         </button>
@@ -693,7 +693,7 @@ export const Profiles: React.FC = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -701,12 +701,12 @@ export const Profiles: React.FC = () => {
                   placeholder="Buscar usuário por nome, e-mail ou login..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
                 />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -722,7 +722,7 @@ export const Profiles: React.FC = () => {
                       <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-600 font-bold">
+                            <div className="w-10 h-10 bg-blue-50 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md flex items-center justify-center text-blue-600 font-bold">
                               {user.name && typeof user.name === 'string' ? user.name.charAt(0) : '?'}
                             </div>
                             <div>
@@ -754,14 +754,14 @@ export const Profiles: React.FC = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button 
                               onClick={() => setSelectedUser(user)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-all"
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md transition-all"
                             >
                               Gerenciar
                               <ChevronRight className="w-4 h-4" />
                             </button>
                             <button 
                               onClick={() => setUserToDelete(user.id)}
-                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all"
+                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all"
                               title="Remover Usuário"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -805,7 +805,7 @@ export const Profiles: React.FC = () => {
                 <button 
                   onClick={handleSave}
                   disabled={saving}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                  className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-6 py-2.5 rounded-md font-bold flex items-center gap-2 transition-all shadow-lg shadow-slate-500/10 disabled:opacity-50"
                 >
                   <Save className="w-5 h-5" />
                   {saving ? 'Salvando...' : 'Salvar Permissões'}
@@ -813,10 +813,10 @@ export const Profiles: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-md shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-6">
                 <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-600 text-2xl font-bold">
+                  <div className="w-20 h-20 bg-blue-50 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md flex items-center justify-center text-blue-600 text-2xl font-bold">
                     {selectedUser.name && typeof selectedUser.name === 'string' ? selectedUser.name.charAt(0) : '?'}
                   </div>
                   <div className="flex-1">
@@ -840,7 +840,7 @@ export const Profiles: React.FC = () => {
                                 permissions: template ? { ...template.permissions } : { ...TEMPLATES['Monitor'] }
                               });
                             }}
-                            className="appearance-none bg-transparent border border-slate-300 dark:border-slate-700 text-blue-500 dark:text-blue-400 rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                            className="appearance-none bg-transparent border border-slate-300 dark:border-slate-700 text-blue-500 dark:text-blue-400 rounded-md pl-3 pr-8 py-1.5 text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 transition-all cursor-pointer"
                           >
                             {templates.map(t => (
                               <option key={t.id} value={t.name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{t.name}</option>
@@ -857,7 +857,7 @@ export const Profiles: React.FC = () => {
                 {canEdit && (
                   <button
                     onClick={() => setShowResetModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all font-semibold border border-amber-200 dark:border-amber-800 disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-all font-semibold border border-amber-200 dark:border-amber-800 disabled:opacity-50"
                   >
                     <Mail className="w-4 h-4" />
                     Resetar Senha
@@ -867,20 +867,20 @@ export const Profiles: React.FC = () => {
 
               <div className="p-8">
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Configuração de Módulos</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
                   {MODULES.map((module) => {
                     const level = selectedUser.permissions?.[module.id as keyof UserPermissions] || 'none';
                     return (
                       <div 
                         key={module.id}
-                        className={`p-5 rounded-2xl border transition-all flex items-center justify-between ${
-                          level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-blue-500/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
+                        className={`p-5 rounded-lg border transition-all flex items-center justify-between ${
+                          level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                            level === 'edit' ? 'bg-blue-500 text-white' : 
-                            level === 'view' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 
+                          <div className={`w-10 h-10 rounded-md flex items-center justify-center ${
+                            level === 'edit' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm' : 
+                            level === 'view' ? 'bg-blue-100 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/20 text-blue-600 dark:text-blue-400' : 
                             'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600'
                           }`}>
                             {level === 'edit' ? <Pencil className="w-5 h-5" /> : 
@@ -892,14 +892,14 @@ export const Profiles: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm">
                           <button
                             onClick={() => handlePermissionChange(module.id, 'none')}
                             title="Sem Acesso"
-                            className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                            className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
                               level === 'none' 
-                                ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 shadow-sm' 
-                                : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ? 'bg-slate-500 text-white shadow-sm' 
+                                : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
                             }`}
                           >
                             <EyeOff className="w-4 h-4" />
@@ -908,10 +908,10 @@ export const Profiles: React.FC = () => {
                           <button
                             onClick={() => handlePermissionChange(module.id, 'view')}
                             title="Apenas Visualizar"
-                            className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                            className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
                               level === 'view' 
-                                ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-sm' 
-                                : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
                             }`}
                           >
                             <Eye className="w-4 h-4" />
@@ -920,10 +920,10 @@ export const Profiles: React.FC = () => {
                           <button
                             onClick={() => handlePermissionChange(module.id, 'edit')}
                             title="Pode Editar"
-                            className={`p-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                            className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
                               level === 'edit' 
-                                ? 'bg-blue-500 text-white shadow-md' 
-                                : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
                             }`}
                           >
                             <Pencil className="w-4 h-4" />
@@ -957,7 +957,7 @@ export const Profiles: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-md shadow-lg overflow-hidden border border-slate-100 dark:border-slate-800"
             >
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -969,7 +969,7 @@ export const Profiles: React.FC = () => {
               </div>
 
               <form onSubmit={handleResetPassword} className="p-8 space-y-6">
-                <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 p-4 rounded-xl text-sm">
+                <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 p-4 rounded-md text-sm">
                   A senha do usuário <strong>{selectedUser.name}</strong> será redefinida para <strong>Mudar@123</strong>.
                 </div>
                 
@@ -981,7 +981,7 @@ export const Profiles: React.FC = () => {
                     value={adminPassword}
                     onChange={e => setAdminPassword(e.target.value)}
                     placeholder="Digite sua senha para confirmar"
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                   />
                 </div>
 
@@ -989,14 +989,14 @@ export const Profiles: React.FC = () => {
                   <button 
                     type="button"
                     onClick={() => setShowResetModal(false)}
-                    className="flex-1 px-4 py-2.5 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+                    className="flex-1 px-4 py-2.5 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-all"
                   >
                     Cancelar
                   </button>
                   <button 
                     type="submit"
                     disabled={resettingPassword}
-                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-md font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50"
                   >
                     {resettingPassword ? 'Resetando...' : 'Confirmar Reset'}
                   </button>
@@ -1021,7 +1021,7 @@ export const Profiles: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 dark:border-slate-800"
+              className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-md shadow-lg overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 dark:border-slate-800"
             >
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Criar Novo Usuário</h2>
@@ -1042,7 +1042,7 @@ export const Profiles: React.FC = () => {
                       type="text"
                       value={newUserForm.name}
                       onChange={e => setNewUserForm({...newUserForm, name: e.target.value.toUpperCase()})}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white uppercase"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white uppercase"
                       placeholder="Nome do usuário"
                     />
                   </div>
@@ -1056,7 +1056,7 @@ export const Profiles: React.FC = () => {
                       type="email"
                       value={newUserForm.email}
                       onChange={e => setNewUserForm({...newUserForm, email: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                       placeholder="usuario@email.com"
                     />
                   </div>
@@ -1069,7 +1069,7 @@ export const Profiles: React.FC = () => {
                       required
                       value={newUserForm.role}
                       onChange={e => handleProfileChange(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                     >
                       {templates.map(t => (
                         <option key={t.id} value={t.name} className="dark:bg-slate-900">{t.name}</option>
@@ -1088,38 +1088,56 @@ export const Profiles: React.FC = () => {
                       </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
                     {MODULES.map((module) => {
                       const level = newUserForm.permissions[module.id as keyof UserPermissions];
                       return (
                         <div 
                           key={module.id}
-                          className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
-                            level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-blue-500/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
+                          className={`p-4 rounded-lg border transition-all flex items-center justify-between ${
+                            level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                           }`}
                         >
                           <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{module.label}</span>
-                          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-100 dark:border-slate-700">
+                          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm">
                             <button
                               type="button"
                               onClick={() => handleNewUserPermissionChange(module.id, 'none')}
-                              className={`p-1.5 rounded-md transition-all ${level === 'none' ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'}`}
+                              title="Sem Acesso"
+                              className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                                level === 'none' 
+                                  ? 'bg-slate-500 text-white shadow-sm' 
+                                  : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
+                              }`}
                             >
-                              <EyeOff className="w-3.5 h-3.5" />
+                              <EyeOff className="w-4 h-4" />
+                              <span className="text-[10px] font-bold uppercase hidden sm:inline">Nenhum</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => handleNewUserPermissionChange(module.id, 'view')}
-                              className={`p-1.5 rounded-md transition-all ${level === 'view' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}
+                              title="Apenas Visualizar"
+                              className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                                level === 'view' 
+                                  ? 'bg-blue-600 text-white shadow-sm' 
+                                  : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
+                              }`}
                             >
-                              <Eye className="w-3.5 h-3.5" />
+                              <Eye className="w-4 h-4" />
+                              <span className="text-[10px] font-bold uppercase hidden sm:inline">Ver</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => handleNewUserPermissionChange(module.id, 'edit')}
-                              className={`p-1.5 rounded-md transition-all ${level === 'edit' ? 'bg-blue-500 text-white' : 'text-slate-400 dark:text-slate-500'}`}
+                              title="Pode Editar"
+                              className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                                level === 'edit' 
+                                  ? 'bg-blue-600 text-white shadow-sm' 
+                                  : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700'
+                              }`}
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <Pencil className="w-4 h-4" />
+                              <span className="text-[10px] font-bold uppercase hidden sm:inline">Editar</span>
                             </button>
                           </div>
                         </div>
@@ -1132,14 +1150,14 @@ export const Profiles: React.FC = () => {
                   <button 
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium"
+                    className="px-6 py-2.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium"
                   >
                     Cancelar
                   </button>
                   <button 
                     type="submit"
                     disabled={saving}
-                    className="px-8 py-2.5 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                    className="px-8 py-2.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm transition-all font-bold shadow-lg shadow-slate-500/10 disabled:opacity-50"
                   >
                     {saving ? 'Criando...' : 'Criar Usuário'}
                   </button>
