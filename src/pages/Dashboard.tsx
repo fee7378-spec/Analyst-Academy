@@ -330,8 +330,8 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
   const qualidade = total > 0 ? ((semErro / total) * 100).toFixed(1) : '0';
 
   const stats = [
-    { label: 'Produtividade Total', value: data?.totalProductivity || 0, icon: TrendingUp, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-    { label: 'Total de Monitorias', value: total, icon: FileText, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: 'Produtividade', value: data?.totalProductivity || 0, icon: TrendingUp, color: 'text-yellow-600', bg: 'bg-yellow-100' },
+    { label: 'Monitorias', value: total, icon: FileText, color: 'text-purple-600', bg: 'bg-purple-100' },
     { label: 'Qualidade', value: `${qualidade}%`, icon: Award, color: 'text-emerald-600', bg: 'bg-emerald-100' },
     { label: 'Erros', value: comErro, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-100' },
   ];

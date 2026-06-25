@@ -709,9 +709,9 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
             onChange={e => setStatusFilter(e.target.value)}
             className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white shrink-0 appearance-none"
           >
-            <option value="" className="dark:bg-slate-900">Todos os Erros</option>
-            <option value="Não" className="dark:bg-slate-900">Sem Erro</option>
-            <option value="Sim" className="dark:bg-slate-900">Com Erro</option>
+            <option value="" className="dark:bg-slate-800">Todas</option>
+            <option value="Não" className="dark:bg-slate-800">Sem Erro</option>
+            <option value="Sim" className="dark:bg-slate-800">Com Erro</option>
           </select>
         </div>,
         topbarRight
