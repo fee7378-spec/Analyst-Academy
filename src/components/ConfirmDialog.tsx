@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 
 interface ConfirmDialogProps {
@@ -20,11 +20,29 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onCancel();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-md shadow-md w-full max-w-md overflow-hidden">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onCancel}
+    >
+      <div 
+        className="bg-white dark:bg-gray-800 rounded-md shadow-md w-full max-w-md overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">

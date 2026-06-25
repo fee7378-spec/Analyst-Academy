@@ -355,7 +355,7 @@ export const DataProcessing: React.FC = () => {
               <button
                 onClick={handleConsolidate}
                 disabled={!files.pj && !files.pf}
-                className="w-full mt-8 bg-slate-800 hover:bg-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-700 disabled:bg-slate-300 text-white py-3 rounded-md font-bold transition-all shadow-lg shadow-slate-500/10 flex items-center justify-center gap-2"
+                className="w-full mt-8 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:dark:bg-slate-800 text-white py-3 rounded-md font-bold transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 Consolidar Bases

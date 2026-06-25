@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../lib/api';
 import { User, UserPermissions, PermissionLevel, ProfileTemplate } from '../types';
 import { 
@@ -16,28 +17,33 @@ import {
   UserPlus,
   Plus,
   Mail,
-  Trash2
+  Trash2,
+  BarChart3,
+  Users,
+  Layers,
+  History,
+  ClipboardList,
+  ShieldCheck,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
 const MODULES = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'nova-monitoria', label: 'Monitorar' },
-  { id: 'analistas', label: 'Analistas' },
-  { id: 'esteiras', label: 'Esteiras' },
-  { id: 'historico', label: 'Histórico' },
-  { id: 'logs', label: 'Log de Atividades' },
-  { id: 'perfis', label: 'Perfis de acesso' },
-  { id: 'perfil', label: 'Meu Perfil' },
-  { id: 'processamento', label: 'Processamento' },
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+  { id: 'analistas', label: 'Analistas', icon: Users },
+  { id: 'esteiras', label: 'Monitorar', icon: Layers },
+  { id: 'historico', label: 'Histórico', icon: History },
+  { id: 'logs', label: 'Log de Atividades', icon: ClipboardList },
+  { id: 'perfis', label: 'Perfis de acesso', icon: ShieldCheck },
+  { id: 'perfil', label: 'Meu Perfil', icon: UserIcon },
+  { id: 'processamento', label: 'Processamento', icon: Database },
 ];
 
 const TEMPLATES: Record<string, UserPermissions> = {
   'Administrador': {
     dashboard: 'edit',
-    'nova-monitoria': 'edit',
     analistas: 'edit',
     esteiras: 'edit',
     historico: 'edit',
@@ -48,9 +54,8 @@ const TEMPLATES: Record<string, UserPermissions> = {
   },
   'Monitor': {
     dashboard: 'view',
-    'nova-monitoria': 'edit',
     analistas: 'view',
-    esteiras: 'none',
+    esteiras: 'edit',
     historico: 'view',
     logs: 'none',
     perfis: 'none',
@@ -59,7 +64,7 @@ const TEMPLATES: Record<string, UserPermissions> = {
   }
 };
 
-const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React.Dispatch<React.SetStateAction<ProfileTemplate[]>>, canEdit: boolean, onUpdate?: () => void }> = ({ templates, setTemplates, canEdit, onUpdate }) => {
+const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React.Dispatch<React.SetStateAction<ProfileTemplate[]>>, canEdit: boolean, onUpdate?: () => void, topbarRight?: Element | null }> = ({ templates, setTemplates, canEdit, onUpdate, topbarRight }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<ProfileTemplate | null>(null);
   const [saving, setSaving] = useState(false);
@@ -69,6 +74,16 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
     permissions: { ...TEMPLATES['Monitor'] }
   });
   const [templateToDelete, setTemplateToDelete] = useState<ProfileTemplate | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowCreateModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSaveTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,8 +166,18 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                 <Shield className="w-10 h-10" />
               </div>
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Editando Template: {selectedTemplate.name}</h2>
-                <p className="text-slate-500 dark:text-slate-400">Configure as permissões padrão para este perfil de acesso</p>
+                {canEdit ? (
+                  <input
+                    type="text"
+                    value={selectedTemplate.name}
+                    onChange={(e) => setSelectedTemplate({...selectedTemplate, name: e.target.value})}
+                    className="text-2xl font-bold text-slate-900 dark:text-white bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none transition-all pb-1"
+                    placeholder="Nome do Template"
+                  />
+                ) : (
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Editando Template: {selectedTemplate.name}</h2>
+                )}
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Configure as permissões padrão para este perfil de acesso</p>
               </div>
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
@@ -183,12 +208,12 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                   <div 
                     key={module.id}
                     className={`p-5 rounded-lg border transition-all flex items-center justify-between ${
-                      level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
+                      level !== 'none' ? 'border-blue-100 dark:border-blue-500/30 bg-blue-50/50 dark:bg-slate-900 border' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-md ${level !== 'none' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                        <Shield className="w-5 h-5" />
+                      <div className={`w-10 h-10 rounded-md flex items-center justify-center ${level !== 'none' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                        <module.icon className="w-5 h-5" />
                       </div>
                       <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{module.label}</span>
                     </div>
@@ -246,32 +271,43 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Templates de Permissão</h2>
-        {canEdit && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-slate-500/10 font-bold text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Template
-          </button>
-        )}
-      </div>
+      {topbarRight && createPortal(
+        <div className="flex items-center gap-3">
+          {canEdit && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm rounded-md transition-all text-sm font-medium mr-2"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Template
+            </button>
+          )}
+        </div>,
+        topbarRight
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {templates.map(template => (
-          <div key={template.id} className="group relative bg-white dark:bg-slate-900 rounded-lg p-6 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all overflow-hidden flex flex-col">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="font-bold text-xl text-slate-900 dark:text-white mb-1 tracking-tight">{template.name}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{template.description}</p>
+      <div className="flex flex-col rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+        <div className="flex items-center px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="flex-1">Template</div>
+          <div className="w-32 px-4 text-right">Ações</div>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {templates.map(template => (
+            <div key={template.id} className="flex items-center px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+              <div className="flex-1 flex items-center gap-4 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+                  {template.name.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 dark:text-white truncate" title={template.name}>{template.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5" title={template.description}>{template.description}</p>
+                </div>
               </div>
-              <div className="flex gap-2 ml-4 shrink-0">
+              
+              <div className="w-32 px-4 shrink-0 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => setSelectedTemplate(template)}
-                  className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md transition-all"
+                  className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-all"
                   title="Editar"
                 >
                   {canEdit ? <Pencil className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -279,7 +315,7 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                 {canEdit && (
                   <button
                     onClick={() => handleDeleteTemplate(template)}
-                    className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all"
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all"
                     title="Excluir"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -287,31 +323,13 @@ const TemplatesTab: React.FC<{ templates: ProfileTemplate[], setTemplates: React
                 )}
               </div>
             </div>
-            
-            <div className="flex gap-4 border-t border-slate-100 dark:border-slate-800 pt-4 mt-auto">
-              <div className="flex-1">
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Edição</p>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"></span>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{Object.values(template.permissions).filter(p => p === 'edit').length} Módulos</span>
-                </div>
-              </div>
-              <div className="w-px bg-slate-100 dark:bg-slate-800"></div>
-              <div className="flex-1">
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Visualização</p>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{Object.values(template.permissions).filter(p => p === 'view').length} Módulos</span>
-                </div>
-              </div>
+          ))}
+          {templates.length === 0 && (
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+              Nenhum template criado ainda.
             </div>
-          </div>
-        ))}
-        {templates.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
-            Nenhum template criado ainda.
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <AnimatePresence>
@@ -432,6 +450,27 @@ export const Profiles: React.FC = () => {
     permissions: { ...TEMPLATES['Monitor'] },
     templateId: ''
   });
+  
+  const [nameFormat, setNameFormat] = useState<'uppercase' | 'lowercase' | 'free'>('uppercase');
+
+  const [topbarLeft, setTopbarLeft] = useState<Element | null>(null);
+  const [topbarRight, setTopbarRight] = useState<Element | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowCreateModal(false);
+        setShowResetModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    setTopbarLeft(document.getElementById('topbar-left'));
+    setTopbarRight(document.getElementById('topbar-right'));
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -559,7 +598,6 @@ export const Profiles: React.FC = () => {
     
     const currentPerms = selectedUser.permissions || {
       dashboard: 'none',
-      'nova-monitoria': 'none',
       analistas: 'none',
       historico: 'none',
       logs: 'none',
@@ -590,6 +628,7 @@ export const Profiles: React.FC = () => {
     setSaving(true);
     try {
       await api.updateUser(selectedUser.id, {
+        name: selectedUser.name,
         role: selectedUser.role,
         permissions: selectedUser.permissions
       });
@@ -620,12 +659,15 @@ export const Profiles: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Perfis de acesso</h1>
-          <p className="text-slate-500 dark:text-slate-400">Gerencie as permissões individuais de cada usuário</p>
-        </div>
-        <div className="flex gap-2">
+      {topbarLeft && createPortal(
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Perfis de acesso</h1>
+        </div>,
+        topbarLeft
+      )}
+
+      {topbarRight && activeTab === 'users' && createPortal(
+        <div className="flex items-center gap-3">
           {canEdit && (
             <button 
               onClick={() => {
@@ -639,14 +681,28 @@ export const Profiles: React.FC = () => {
                 });
                 setShowCreateModal(true);
               }}
-              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-slate-500/10 font-bold"
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm rounded-md transition-all text-sm font-medium mr-2"
             >
-              <UserPlus className="w-5 h-5" />
+              <UserPlus className="w-4 h-4" />
               Criar novo usuário
             </button>
           )}
-        </div>
-      </header>
+
+          {!selectedUser && (
+            <div className="relative w-64 shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="text"
+                placeholder="Buscar usuário..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
+              />
+            </div>
+          )}
+        </div>,
+        topbarRight
+      )}
 
       <div className="flex gap-4 border-b border-slate-200 dark:border-slate-700">
         <button
@@ -706,72 +762,53 @@ export const Profiles: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Usuário</th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Perfil</th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status Permissões</th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-50 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md flex items-center justify-center text-blue-600 font-bold">
-                              {user.name && typeof user.name === 'string' ? user.name.charAt(0) : '?'}
-                            </div>
-                            <div>
-                              <div className="text-sm font-bold text-slate-900 dark:text-white">{user.name}</div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400">{user.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider border border-slate-200 dark:border-slate-700">
-                              <Shield className="w-3 h-3" />
-                              {user.role}
-                            </span>
-                            </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-1">
-                            {Object.values(user.permissions || {}).filter(p => p !== 'none').length > 0 ? (
-                              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                                {Object.values(user.permissions || {}).filter(p => p !== 'none').length} ativas
-                              </span>
-                            ) : (
-                              <span className="text-xs text-slate-400 dark:text-slate-600 italic">Nenhuma permissão</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button 
-                              onClick={() => setSelectedUser(user)}
-                              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md transition-all"
-                            >
-                              Gerenciar
-                              <ChevronRight className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => setUserToDelete(user.id)}
-                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all"
-                              title="Remover Usuário"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="flex flex-col rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+              <div className="flex items-center px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <div className="flex-1">Usuário</div>
+                <div className="w-32 px-4 text-right">Ações</div>
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredUsers.map((user) => (
+                  <motion.div
+                    key={user.id}
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
+                  >
+                    <div className="flex-1 flex items-center gap-4 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+                        {user.name && typeof user.name === 'string' ? `${user.name.split(' ')[0][0]}${user.name.split(' ').length > 1 ? user.name.split(' ')[1][0] : ''}`.toUpperCase() : '?'}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-slate-900 dark:text-white truncate" title={user.name}>{user.name}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5" title={user.email}>{user.email}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="w-32 px-4 shrink-0 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => setSelectedUser(user)}
+                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-all"
+                        title="Editar Permissões"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => setUserToDelete(user.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all"
+                        title="Excluir Usuário"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+                {filteredUsers.length === 0 && (
+                  <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+                    Nenhum usuário encontrado.
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -820,7 +857,17 @@ export const Profiles: React.FC = () => {
                     {selectedUser.name && typeof selectedUser.name === 'string' ? selectedUser.name.charAt(0) : '?'}
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedUser.name}</h2>
+                    {canEdit ? (
+                      <input
+                        type="text"
+                        value={selectedUser.name}
+                        onChange={(e) => setSelectedUser({...selectedUser, name: e.target.value})}
+                        className="text-2xl font-bold text-slate-900 dark:text-white bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none transition-all pb-1 mb-1"
+                        placeholder="Nome do Usuário"
+                      />
+                    ) : (
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedUser.name}</h2>
+                    )}
                     <div className="flex items-center gap-4 mt-1">
                       <span className="text-slate-500 dark:text-slate-400 font-medium">{selectedUser.email}</span>
                       <span className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
@@ -874,18 +921,16 @@ export const Profiles: React.FC = () => {
                       <div 
                         key={module.id}
                         className={`p-5 rounded-lg border transition-all flex items-center justify-between ${
-                          level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
+                          level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-md flex items-center justify-center ${
                             level === 'edit' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm' : 
-                            level === 'view' ? 'bg-blue-100 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/20 text-blue-600 dark:text-blue-400' : 
+                            level === 'view' ? 'bg-blue-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/20 text-blue-600 dark:text-blue-400' : 
                             'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600'
                           }`}>
-                            {level === 'edit' ? <Pencil className="w-5 h-5" /> : 
-                             level === 'view' ? <Eye className="w-5 h-5" /> : 
-                             <EyeOff className="w-5 h-5" />}
+                            <module.icon className="w-5 h-5" />
                           </div>
                           <span className={`font-bold ${level !== 'none' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-600'}`}>
                             {module.label}
@@ -940,7 +985,7 @@ export const Profiles: React.FC = () => {
         )}
       </AnimatePresence>
       ) : (
-        <TemplatesTab templates={templates} setTemplates={setTemplates} canEdit={canEdit} onUpdate={loadData} />
+        <TemplatesTab templates={templates} setTemplates={setTemplates} canEdit={canEdit} onUpdate={loadData} topbarRight={topbarRight} />
       )}
 
       <AnimatePresence>
@@ -961,7 +1006,7 @@ export const Profiles: React.FC = () => {
             >
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  Confirmar Reset de Senha
+                  Confirmar reset de senha
                 </h2>
                 <button onClick={() => setShowResetModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
                   <Plus className="w-6 h-6 text-slate-400 rotate-45" />
@@ -969,10 +1014,6 @@ export const Profiles: React.FC = () => {
               </div>
 
               <form onSubmit={handleResetPassword} className="p-8 space-y-6">
-                <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 p-4 rounded-md text-sm">
-                  A senha do usuário <strong>{selectedUser.name}</strong> será redefinida para <strong>Mudar@123</strong>.
-                </div>
-                
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Sua Senha (Administrador)</label>
                   <input 
@@ -1033,16 +1074,52 @@ export const Profiles: React.FC = () => {
               <form onSubmit={handleCreateUser} className="flex-1 overflow-y-auto p-8 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                      <UserIcon className="w-4 h-4 text-slate-400" />
-                      Nome Completo
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                        <UserIcon className="w-4 h-4 text-slate-400" />
+                        Nome Completo
+                      </label>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNameFormat('uppercase');
+                            setNewUserForm(prev => ({ ...prev, name: prev.name.toUpperCase() }));
+                          }}
+                          className={`text-[10px] px-2 py-1 rounded-md font-bold transition-all ${nameFormat === 'uppercase' ? 'bg-slate-900 text-white dark:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}
+                        >
+                          MAIÚSCULAS
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNameFormat('lowercase');
+                            setNewUserForm(prev => ({ ...prev, name: prev.name.toLowerCase() }));
+                          }}
+                          className={`text-[10px] px-2 py-1 rounded-md font-bold transition-all ${nameFormat === 'lowercase' ? 'bg-slate-900 text-white dark:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}
+                        >
+                          minúsculas
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNameFormat('free')}
+                          className={`text-[10px] px-2 py-1 rounded-md font-bold transition-all ${nameFormat === 'free' ? 'bg-slate-900 text-white dark:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'}`}
+                        >
+                          Liberado
+                        </button>
+                      </div>
+                    </div>
                     <input 
                       required
                       type="text"
                       value={newUserForm.name}
-                      onChange={e => setNewUserForm({...newUserForm, name: e.target.value.toUpperCase()})}
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white uppercase"
+                      onChange={e => {
+                        let newName = e.target.value;
+                        if (nameFormat === 'uppercase') newName = newName.toUpperCase();
+                        if (nameFormat === 'lowercase') newName = newName.toLowerCase();
+                        setNewUserForm({...newUserForm, name: newName})
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white"
                       placeholder="Nome do usuário"
                     />
                   </div>
@@ -1095,10 +1172,15 @@ export const Profiles: React.FC = () => {
                         <div 
                           key={module.id}
                           className={`p-4 rounded-lg border transition-all flex items-center justify-between ${
-                            level !== 'none' ? 'border-blue-100 dark:border-blue-500/20 bg-blue-50/30 dark:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
+                            level !== 'none' ? 'border-blue-100 dark:border-blue-500/30 bg-blue-50/50 dark:bg-slate-900 border' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                           }`}
                         >
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{module.label}</span>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-md flex items-center justify-center ${level !== 'none' ? 'bg-slate-900 text-white dark:bg-blue-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                              <module.icon className="w-4 h-4" />
+                            </div>
+                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{module.label}</span>
+                          </div>
                           <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm">
                             <button
                               type="button"

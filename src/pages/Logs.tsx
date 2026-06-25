@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../lib/api';
 import { ActivityLog } from '../types';
 import { 
@@ -27,6 +28,24 @@ export const Logs: React.FC = () => {
   const [clearPeriod, setClearPeriod] = useState('7');
   const [clearing, setClearing] = useState(false);
   const [visibleCount, setVisibleCount] = useState(20);
+
+  const [topbarLeft, setTopbarLeft] = useState<Element | null>(null);
+  const [topbarRight, setTopbarRight] = useState<Element | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowClearModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    setTopbarLeft(document.getElementById('topbar-left'));
+    setTopbarRight(document.getElementById('topbar-right'));
+  }, []);
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const permissions = currentUser.permissions || {};
@@ -123,81 +142,87 @@ export const Logs: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Log de Atividades</h1>
-          <p className="text-slate-500 dark:text-slate-400">Rastreabilidade completa de todas as ações no sistema</p>
-        </div>
-        {canEditLogs && (
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setShowClearModal(true)}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-red-500/20 text-sm font-bold"
-            >
-              <Trash2 className="w-5 h-5" />
-              Limpar Logs
-            </button>
-            <button 
-              onClick={handleExport}
-              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-slate-500/10 text-sm font-bold"
-            >
-              <Download className="w-5 h-5" />
-              Exportar Logs
-            </button>
-          </div>
-        )}
-      </header>
+      {topbarLeft && createPortal(
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Log de Atividades</h1>
+        </div>,
+        topbarLeft
+      )}
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center">
-        <button 
-          onClick={loadLogs}
-          disabled={loading}
-          className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/10 rounded-md transition-all"
-          title="Atualizar Logs"
-        >
-          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-        <div className="relative flex-1 min-w-[250px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input 
-            type="text"
-            placeholder="Buscar por usuário, módulo ou ID..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
-          />
-        </div>
-        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-1.5">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <input 
-            type="date"
-            value={dateFilter.start}
-            onChange={e => setDateFilter({...dateFilter, start: e.target.value})}
-            className="bg-transparent text-xs outline-none dark:text-white"
-          />
-          <span className="text-slate-300 dark:text-slate-700">|</span>
-          <input 
-            type="date"
-            value={dateFilter.end}
-            onChange={e => setDateFilter({...dateFilter, end: e.target.value})}
-            className="bg-transparent text-xs outline-none dark:text-white"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <select 
-            value={actionFilter}
-            onChange={e => setActionFilter(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
+      {topbarRight && createPortal(
+        <div className="flex items-center gap-3">
+          {canEditLogs && (
+            <div className="flex items-center gap-2 mr-2">
+              <button 
+                onClick={() => setShowClearModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-md transition-all text-sm font-medium"
+              >
+                <Trash2 className="w-4 h-4" />
+                Limpar
+              </button>
+              <button 
+                onClick={handleExport}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm font-medium"
+              >
+                <Download className="w-4 h-4" />
+                Exportar
+              </button>
+            </div>
+          )}
+          
+          <button 
+            onClick={loadLogs}
+            disabled={loading}
+            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-all"
+            title="Atualizar Logs"
           >
-            <option value="" className="dark:bg-slate-900">Todas as Ações</option>
-            <option className="dark:bg-slate-900">Criação</option>
-            <option className="dark:bg-slate-900">Edição</option>
-            <option className="dark:bg-slate-900">Exclusão</option>
-            <option className="dark:bg-slate-900">Exportação</option>
-          </select>
-        </div>
-      </div>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-1.5 shrink-0">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <input 
+              type="date"
+              value={dateFilter.start}
+              onChange={e => setDateFilter({...dateFilter, start: e.target.value})}
+              className="bg-transparent text-xs outline-none dark:text-white"
+            />
+            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <input 
+              type="date"
+              value={dateFilter.end}
+              onChange={e => setDateFilter({...dateFilter, end: e.target.value})}
+              className="bg-transparent text-xs outline-none dark:text-white"
+            />
+          </div>
+          
+          <div className="relative w-36 shrink-0">
+            <select 
+              value={actionFilter}
+              onChange={e => setActionFilter(e.target.value)}
+              className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white appearance-none"
+            >
+              <option value="">Todas Ações</option>
+              <option>Criação</option>
+              <option>Edição</option>
+              <option>Exclusão</option>
+              <option>Exportação</option>
+            </select>
+          </div>
+          
+          <div className="relative w-48 shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
+            />
+          </div>
+        </div>,
+        topbarRight
+      )}
 
       <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
         <div className="overflow-x-auto">

@@ -4,7 +4,6 @@ export type PermissionLevel = 'view' | 'edit' | 'none';
 
 export interface UserPermissions {
   dashboard: PermissionLevel;
-  'nova-monitoria': PermissionLevel;
   analistas: PermissionLevel;
   historico: PermissionLevel;
   logs: PermissionLevel;

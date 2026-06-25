@@ -109,6 +109,17 @@ export const Tracks: React.FC = () => {
   const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowModal(false);
+        setShowMassEditModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     loadTracks();
   }, []);
 
@@ -258,9 +269,15 @@ export const Tracks: React.FC = () => {
     <div className="space-y-6">
       {topbarLeft && createPortal(
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Esteiras</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Monitorar</h1>
+        </div>,
+        topbarLeft
+      )}
+
+      {topbarRight && createPortal(
+        <div className="flex items-center gap-3">
           {canEdit && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mr-2">
               <button 
                 onClick={() => {
                   setMassEditForm({
@@ -287,16 +304,10 @@ export const Tracks: React.FC = () => {
                 className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm rounded-md transition-all text-sm font-medium"
               >
                 <Plus className="w-4 h-4" />
-                Nova
+                Nova Esteira
               </button>
             </div>
           )}
-        </div>,
-        topbarLeft
-      )}
-
-      {topbarRight && createPortal(
-        <div className="flex items-center gap-3">
           <button 
             onClick={loadTracks}
             disabled={loading}
@@ -347,9 +358,6 @@ export const Tracks: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-lg text-slate-900 dark:text-white truncate mb-1">{track.name}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {track.formConfig?.demandTypes?.length || 0} tipos de demanda
-                      </p>
                     </div>
                   </div>
                   {canEdit && (

@@ -69,6 +69,17 @@ export const Analysts: React.FC = () => {
   const [topbarRight, setTopbarRight] = useState<Element | null>(null);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowModal(false);
+        setViewingAnalyst(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     setTopbarLeft(document.getElementById('topbar-left'));
     setTopbarRight(document.getElementById('topbar-right'));
   }, []);
@@ -345,28 +356,26 @@ export const Analysts: React.FC = () => {
     return { errorsByTag };
   };
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [searchTerm, selectedTrackFilter]);
+
   const filteredAnalysts = Array.isArray(analysts) ? analysts.filter(a => {
     const search = (searchTerm || '').toLowerCase();
     const searchMatch = String(a.name || '').toLowerCase().includes(search) || 
            String(a.matricula || '').toLowerCase().includes(search);
     const trackMatch = selectedTrackFilter ? a.esteira === selectedTrackFilter : true;
     return searchMatch && trackMatch;
-  }) : [];
+  }).sort((a, b) => a.name.localeCompare(b.name)) : [];
+
+  const displayedAnalysts = filteredAnalysts.slice(0, visibleCount);
 
   return (
     <div className="space-y-6">
       {topbarLeft && createPortal(
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Analistas</h1>
-          {canEdit && (
-            <button 
-              onClick={() => { setShowModal(true); setEditingAnalyst(null); resetForm(); }}
-              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-3 py-1.5 rounded-md flex items-center gap-2 transition-all text-sm font-medium"
-            >
-              <UserPlus className="w-4 h-4" />
-              Novo
-            </button>
-          )}
         </div>,
         topbarLeft
       )}
@@ -418,6 +427,16 @@ export const Analysts: React.FC = () => {
               className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm dark:text-white"
             />
           </div>
+
+          {canEdit && (
+            <button 
+              onClick={() => { setShowModal(true); setEditingAnalyst(null); resetForm(); }}
+              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-3 py-1.5 rounded-md flex items-center gap-2 transition-all text-sm font-medium ml-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              Novo
+            </button>
+          )}
         </div>,
         topbarRight
       )}
@@ -425,8 +444,7 @@ export const Analysts: React.FC = () => {
       <div className="flex flex-col rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
         <div className="flex items-center px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           <div className="flex-1">Analista</div>
-          <div className="w-48 px-4">Esteira</div>
-          <div className="w-40 px-4">Status de Acesso</div>
+          <div className="flex-1 px-4 text-center">Esteira</div>
           <div className="w-32 px-4 text-right">Ações</div>
         </div>
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -448,16 +466,9 @@ export const Analysts: React.FC = () => {
                 </div>
               </div>
               
-              <div className="w-48 px-4 shrink-0">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-full">
+              <div className="flex-1 px-4 shrink-0 flex justify-center">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-[90%]">
                   {analyst.esteira}
-                </span>
-              </div>
-              
-              <div className="w-40 px-4 shrink-0 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  TUDO OK
                 </span>
               </div>
 
@@ -618,7 +629,7 @@ export const Analysts: React.FC = () => {
             >
               <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center text-white shadow-lg shadow-slate-500/10">
+                  <div className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-lg shadow-slate-500/10">
                     <BarChart3 className="w-6 h-6" />
                   </div>
                   <div>

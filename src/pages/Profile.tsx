@@ -90,14 +90,6 @@ export const Profile: React.FC = () => {
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Meu Perfil</h1>
           <p className="text-slate-500 dark:text-slate-400">Visualize suas informações pessoais, atividades recentes e configurações de segurança</p>
         </div>
-        <button 
-          type="button"
-          onClick={toggleDarkMode}
-          className="p-3 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
-          title={isDark ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
-        >
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -113,18 +105,18 @@ export const Profile: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-slate-900 p-6 rounded-md shadow-lg text-white">
+          <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-md shadow-sm border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
             <h3 className="font-bold mb-4 flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-blue-400" />
+              <CheckCircle2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
               Informações
             </h3>
             <div className="space-y-4">
               <div className="flex justify-between text-sm items-center">
-                <span className="text-slate-400 flex items-center gap-2">
+                <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   Último Acesso
                 </span>
-                <span className="font-medium text-slate-300">{lastSignIn || 'N/A'}</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">{lastSignIn || 'N/A'}</span>
               </div>
             </div>
           </div>

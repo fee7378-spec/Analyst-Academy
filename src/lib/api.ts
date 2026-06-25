@@ -31,24 +31,24 @@ export const normalizeString = (str: any) => {
 
 const DEFAULT_PERMISSIONS = {
   dashboard: 'view',
-  'nova-monitoria': 'view',
   analistas: 'none',
   historico: 'view',
   logs: 'none',
   perfis: 'none',
   perfil: 'view',
-  esteiras: 'none'
+  esteiras: 'none',
+  processamento: 'none'
 };
 
 const ADMIN_PERMISSIONS = {
   dashboard: 'edit',
-  'nova-monitoria': 'edit',
   analistas: 'edit',
   historico: 'edit',
   logs: 'edit',
   perfis: 'edit',
   perfil: 'edit',
-  esteiras: 'edit'
+  esteiras: 'edit',
+  processamento: 'edit'
 };
 
 const initDb = async () => {

@@ -106,7 +106,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const canEditHistorico = currentUser.role === 'Administrador' || permissions['historico'] === 'edit';
   const canClearHistorico = currentUser.role === 'Administrador';
   const canViewHistorico = currentUser.role === 'Administrador' || permissions['historico'] !== 'none';
-  const canEditNovaMonitoria = currentUser.role === 'Administrador' || permissions['nova-monitoria'] === 'edit';
+  const canEditNovaMonitoria = currentUser.role === 'Administrador' || permissions['esteiras'] === 'edit';
   const canViewAnalysts = currentUser.role === 'Administrador' || permissions['analistas'] !== 'none';
 
   // Form State
@@ -133,14 +133,42 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const [topbarRight, setTopbarRight] = useState<Element | null>(null);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowClearModal(false);
+        setShowImportModal(false);
+        setViewingAnalysis(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     setTopbarLeft(document.getElementById('topbar-left'));
     setTopbarRight(document.getElementById('topbar-right'));
   }, []);
 
   useEffect(() => {
+    if (showForm && !selectedTrack && !location.state?.trackName && !editingAnalysis) {
+      navigate('/esteiras');
+    }
+  }, [showForm, selectedTrack, location.state, navigate, editingAnalysis]);
+
+  useEffect(() => {
     loadData();
     if (location.state?.trackName && mode === 'form') {
-      setFormData(prev => ({ ...prev, track: location.state.trackName }));
+      const trackName = location.state.trackName;
+      setSelectedTrack(trackName);
+      
+      let demandType = '';
+      if (trackName === 'Abertura PJ' || trackName === 'BKO Abertura') {
+          demandType = 'Abertura de conta';
+      } else if (trackName === 'Fatca') {
+          demandType = 'Fatca';
+      }
+      
+      setFormData(prev => ({ ...prev, track: trackName, demand_type: demandType }));
     }
   }, [mode, location.state]);
 
@@ -619,22 +647,6 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">
             {showForm ? (editingAnalysis ? 'Editar Monitoria' : 'Nova Monitoria') : 'Histórico de Monitorias'}
           </h1>
-          {!showForm && canEditNovaMonitoria && (
-            <button 
-              onClick={() => { 
-                if (mode === 'list') {
-                  navigate('/nova-analise');
-                } else {
-                  setShowForm(true); 
-                  resetForm(); 
-                }
-              }}
-              className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent shadow-sm px-3 py-1.5 rounded-md flex items-center gap-2 transition-all text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              Nova
-            </button>
-          )}
         </div>,
         topbarLeft
       )}
@@ -707,72 +719,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
 
       <AnimatePresence mode="wait">
         {showForm ? (
-          !selectedTrack ? (
-            <motion.div
-              key="track-selection"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-              {tracks.map((track, index) => {
-                const iconData = getIconDataById(track.icon, track.name);
-                const Icon = iconData.icon;
-                return (
-                <button
-                  key={track.id}
-                  onClick={() => {
-                    setSelectedTrack(track.name);
-                    
-                    let currentDemandTypes = track.formConfig?.demandTypes?.length > 0 ? track.formConfig.demandTypes : DEMAND_TYPES;
-                    if (track.name === 'Abertura PJ' || track.name === 'BKO Abertura') {
-                      currentDemandTypes = ['Abertura de conta'];
-                    } else if (track.name === 'Fatca') {
-                      currentDemandTypes = ['Fatca'];
-                    } else {
-                      currentDemandTypes = currentDemandTypes.filter((type: string) => type !== 'Abertura de conta');
-                    }
-                    
-                    let demandType = formData.demand_type;
-                    if (track.name === 'Abertura PJ' || track.name === 'BKO Abertura') {
-                        demandType = 'Abertura de conta';
-                    } else if (track.name === 'Fatca') {
-                        demandType = 'Fatca';
-                    } else {
-                        demandType = '';
-                    }
-
-                    setFormData({ ...formData, track: track.name, demand_type: demandType });
-                  }}
-                  className="bg-white dark:bg-slate-900 p-8 rounded-md shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-blue-500/30 transition-all group text-left flex flex-col items-center justify-center gap-4"
-                >
-                  <div className={`p-4 rounded-lg ${iconData.color} group-hover:scale-110 transition-transform`}>
-                    <Icon className="w-10 h-10" />
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{track.name}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Clique para iniciar monitoria nesta esteira</p>
-                  </div>
-                </button>
-              )})}
-              <div className="md:col-span-2 lg:col-span-3 flex justify-center mt-4">
-                <button 
-                  onClick={() => {
-                    if (mode === 'form') {
-                      navigate('/historico');
-                    } else {
-                      setShowForm(false);
-                      setSelectedTrack(null);
-                    }
-                  }}
-                  className="text-slate-500 hover:text-slate-700 font-medium flex items-center gap-2"
-                >
-                  <X className="w-4 h-4" />
-                  Cancelar e voltar ao histórico
-                </button>
-              </div>
-            </motion.div>
-          ) : (
+          !selectedTrack ? null : (
             <motion.div
               key="form"
               initial={{ opacity: 0, y: 20 }}
@@ -791,7 +738,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => setSelectedTrack(null)}
+                  onClick={() => navigate('/esteiras')}
                   className="text-sm font-semibold text-blue-600 hover:text-blue-700 underline underline-offset-4"
                 >
                   Alterar Esteira
@@ -1343,7 +1290,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                           handleEdit(viewingAnalysis);
                           setViewingAnalysis(null);
                         }}
-                        className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-blue-700 text-white rounded-md transition-colors font-medium flex items-center gap-2"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium flex items-center gap-2"
                       >
                         <Edit2 className="w-4 h-4" />
                         Editar

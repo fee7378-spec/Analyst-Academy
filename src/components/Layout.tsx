@@ -86,7 +86,7 @@ export const Layout: React.FC = () => {
           </div>
           <footer className="mt-auto pt-6 text-center shrink-0">
             <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">
-              © Developed by Felipe Nascimento • Analista Academy
+              © Developed by Felipe Nascimento
             </p>
           </footer>
         </div>
