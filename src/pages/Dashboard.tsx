@@ -52,19 +52,18 @@ export const Dashboard: React.FC<{ individualMode?: boolean }> = ({ individualMo
   }, []);
   const [analysts, setAnalysts] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [filters, setFilters] = useState(() => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     
-    // Format to YYYY-MM-DD for input[type="date"]
-    const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
     return {
       track: '',
       analyst_id: '',

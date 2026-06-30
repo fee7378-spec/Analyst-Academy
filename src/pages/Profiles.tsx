@@ -24,7 +24,8 @@ import {
   History,
   ClipboardList,
   ShieldCheck,
-  Database
+  Database,
+  MessageSquareWarning
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
@@ -39,6 +40,7 @@ const MODULES = [
   { id: 'perfis', label: 'Perfis de acesso', icon: ShieldCheck },
   { id: 'perfil', label: 'Meu Perfil', icon: UserIcon },
   { id: 'processamento', label: 'Processamento', icon: Database },
+  { id: 'contestacoes', label: 'Contestações', icon: MessageSquareWarning },
 ];
 
 const TEMPLATES: Record<string, UserPermissions> = {
@@ -50,7 +52,8 @@ const TEMPLATES: Record<string, UserPermissions> = {
     logs: 'edit',
     perfis: 'edit',
     perfil: 'edit',
-    processamento: 'edit'
+    processamento: 'edit',
+    contestacoes: 'edit'
   },
   'Monitor': {
     dashboard: 'view',
@@ -60,7 +63,8 @@ const TEMPLATES: Record<string, UserPermissions> = {
     logs: 'none',
     perfis: 'none',
     perfil: 'view',
-    processamento: 'none'
+    processamento: 'none',
+    contestacoes: 'edit'
   }
 };
 

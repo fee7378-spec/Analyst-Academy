@@ -1,4 +1,4 @@
-export type UserRole = 'Administrador' | 'Monitor' | 'Analista';
+export type UserRole = 'Administrador' | 'Supervisor' | 'Monitor' | 'Analista';
 
 export type PermissionLevel = 'view' | 'edit' | 'none';
 
@@ -11,6 +11,7 @@ export interface UserPermissions {
   perfil: PermissionLevel;
   esteiras: PermissionLevel;
   processamento: PermissionLevel;
+  contestacoes: PermissionLevel;
 }
 
 export interface User {
@@ -36,6 +37,24 @@ export interface ProfileTemplate {
 
 export type AnalysisStatus = 'Sim' | 'Não';
 
+export interface ContestMessage {
+  id: string;
+  sender_name: string;
+  sender_role: string;
+  message: string;
+  created_at: string;
+}
+
+export type ContestStatus = 'aberta' | 'respondida' | 'encerrada' | 'cancelada';
+
+export interface Contest {
+  status: ContestStatus;
+  messages: ContestMessage[];
+  created_by_name: string;
+  created_by_email?: string;
+  created_at: string;
+}
+
 export interface Analysis {
   id: number;
   analyst_id: number;
@@ -52,6 +71,7 @@ export interface Analysis {
   tag?: string;
   monitor_name: string;
   created_at: string;
+  contest?: Contest;
 }
 
 export interface ActivityLog {
@@ -74,4 +94,14 @@ export interface DashboardData {
   byTrack: { track: string; count: number }[];
   evolution: { week: string; count: number; errors: number }[];
   errorsByTag: { tag: string; count: number }[];
+}
+
+export interface Notification {
+  id: string;
+  user_email: string;
+  title: string;
+  message: string;
+  read: boolean;
+  link?: string;
+  created_at: string;
 }

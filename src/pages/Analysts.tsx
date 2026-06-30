@@ -72,7 +72,9 @@ export const Analysts: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowModal(false);
-        setViewingAnalyst(null);
+        setEditingAnalyst(null);
+        setShowStatsModal(false);
+        setSelectedAnalyst(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);

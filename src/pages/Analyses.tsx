@@ -57,7 +57,10 @@ import {
   Lightbulb,
   Rocket,
   Compass,
-  Check
+  Check,
+  Hammer,
+  Send,
+  XCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
@@ -107,7 +110,9 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const canClearHistorico = currentUser.role === 'Administrador';
   const canViewHistorico = currentUser.role === 'Administrador' || permissions['historico'] !== 'none';
   const canEditNovaMonitoria = currentUser.role === 'Administrador' || permissions['esteiras'] === 'edit';
+  const canImportMonitoria = canEditNovaMonitoria || permissions['esteiras'] === 'view';
   const canViewAnalysts = currentUser.role === 'Administrador' || permissions['analistas'] !== 'none';
+  const canContest = currentUser.role === 'Administrador' || currentUser.role === 'Supervisor' || permissions['contestacoes'] === 'edit';
 
   // Form State
   const [formData, setFormData] = useState({
@@ -128,6 +133,8 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const [otherDemandType, setOtherDemandType] = useState('');
   const [analysisToDelete, setAnalysisToDelete] = useState<number | null>(null);
   const [viewingAnalysis, setViewingAnalysis] = useState<Analysis | null>(null);
+  const [contestMessage, setContestMessage] = useState('');
+  const [submittingContest, setSubmittingContest] = useState(false);
 
   const [topbarLeft, setTopbarLeft] = useState<Element | null>(null);
   const [topbarRight, setTopbarRight] = useState<Element | null>(null);
@@ -461,7 +468,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
-    if (!canEditNovaMonitoria) {
+    if (!canImportMonitoria) {
       toast.error('Você não tem permissão para realizar esta ação');
       return;
     }
@@ -561,11 +568,105 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
     });
   };
 
+  const handleContestSubmit = async () => {
+    if (!viewingAnalysis || !contestMessage.trim() || submittingContest) return;
+
+    setSubmittingContest(true);
+    try {
+      const newMessage = {
+        id: Date.now().toString(),
+        sender_name: currentUser.name,
+        sender_role: currentUser.role,
+        message: contestMessage.trim(),
+        created_at: new Date().toISOString()
+      };
+
+      const existingContest = viewingAnalysis.contest || {
+        status: 'aberta',
+        messages: [],
+        created_by_name: currentUser.name,
+        created_by_email: currentUser.email,
+        created_at: new Date().toISOString()
+      };
+
+      let newStatus = existingContest.status;
+      if (existingContest.messages.length > 0) {
+        if (currentUser.role === 'Monitor' || currentUser.name === viewingAnalysis.monitor_name) {
+          newStatus = 'respondida';
+        } else {
+          newStatus = 'aberta';
+        }
+      }
+
+      const updatedContest = {
+        ...existingContest,
+        status: newStatus,
+        messages: [...existingContest.messages, newMessage]
+      };
+
+      await api.updateAnalysis(viewingAnalysis.id, { contest: updatedContest });
+      
+      setViewingAnalysis({ ...viewingAnalysis, contest: updatedContest });
+      setAnalyses(analyses.map(a => a.id === viewingAnalysis.id ? { ...a, contest: updatedContest } : a));
+      setContestMessage('');
+      toast.success('Mensagem enviada com sucesso');
+
+      const usersList = await api.getUsers();
+      const targetEmail = currentUser.name === viewingAnalysis.monitor_name 
+        ? updatedContest.created_by_email 
+        : usersList.find((u: any) => u.name === viewingAnalysis.monitor_name)?.email;
+
+      if (targetEmail && targetEmail !== currentUser.email) {
+        await api.createNotification({
+          user_email: targetEmail,
+          title: `Contestação atualizada na monitoria #${viewingAnalysis.demand_number}`,
+          message: `${currentUser.name} enviou uma mensagem na contestação.`,
+        });
+      }
+
+    } catch (error) {
+      toast.error('Erro ao enviar contestação');
+    } finally {
+      setSubmittingContest(false);
+    }
+  };
+
+  const handleCancelContest = async () => {
+    if (!viewingAnalysis || !viewingAnalysis.contest) return;
+    
+    try {
+      const updatedContest = {
+        ...viewingAnalysis.contest,
+        status: 'cancelada' as const
+      };
+
+      await api.updateAnalysis(viewingAnalysis.id, { contest: updatedContest });
+      
+      setViewingAnalysis({ ...viewingAnalysis, contest: updatedContest });
+      setAnalyses(analyses.map(a => a.id === viewingAnalysis.id ? { ...a, contest: updatedContest } : a));
+      toast.success('Contestação cancelada com sucesso');
+
+      const usersList = await api.getUsers();
+      const targetEmail = usersList.find((u: any) => u.name === viewingAnalysis.monitor_name)?.email;
+
+      if (targetEmail && targetEmail !== currentUser.email) {
+        await api.createNotification({
+          user_email: targetEmail,
+          title: `Contestação cancelada na monitoria #${viewingAnalysis.demand_number}`,
+          message: `${currentUser.name} cancelou a contestação.`,
+        });
+      }
+
+    } catch (error) {
+      toast.error('Erro ao cancelar contestação');
+    }
+  };
+
   const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!canEditNovaMonitoria) {
+    if (!canImportMonitoria) {
       toast.error('Você não tem permissão para realizar esta ação');
       return;
     }
@@ -1045,13 +1146,15 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     <Download className="w-4 h-4" />
                     Exportar
                   </button>
-                  <button 
-                    onClick={() => setShowImportModal(true)}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 text-sm font-bold"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Importar
-                  </button>
+                  {canImportMonitoria && (
+                    <button 
+                      onClick={() => setShowImportModal(true)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 text-sm font-bold"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Importar
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1098,6 +1201,18 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                             {getStatusIcon(analysis.status)}
                             {analysis.status}
                           </span>
+                          {analysis.contest && (
+                            <div className="mt-1.5">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${
+                                analysis.contest.status === 'cancelada' 
+                                  ? 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800'
+                                  : 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border-amber-200 dark:from-amber-900/30 dark:to-orange-900/30 dark:text-amber-400 dark:border-amber-800'
+                              }`} title={`Contestação: ${analysis.contest.status === 'aberta' ? 'Em Análise' : analysis.contest.status === 'cancelada' ? 'Cancelada' : 'Respondida'}`}>
+                                <Hammer className="w-3 h-3" />
+                                Contestada
+                              </span>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-slate-600 dark:text-slate-400">{analysis.tag || '-'}</div>
@@ -1266,6 +1381,78 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
                     </div>
                   )}
                 </div>
+
+                {viewingAnalysis.status === 'Sim' && (
+                  <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Hammer className="w-5 h-5 text-amber-500" />
+                        Contestação
+                        {viewingAnalysis.contest?.status && (
+                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold shadow-sm ${
+                            viewingAnalysis.contest.status === 'aberta' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800' :
+                            viewingAnalysis.contest.status === 'cancelada' ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700' :
+                            'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                          }`}>
+                            {viewingAnalysis.contest.status === 'aberta' ? 'Em Análise' : viewingAnalysis.contest.status === 'cancelada' ? 'Cancelada' : 'Respondida'}
+                          </span>
+                        )}
+                      </h3>
+                      {viewingAnalysis.contest && viewingAnalysis.contest.status !== 'cancelada' && canContest && (
+                        <button
+                          onClick={handleCancelContest}
+                          className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-red-600 transition-colors"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Cancelar Contestação
+                        </button>
+                      )}
+                    </div>
+
+                    {viewingAnalysis.contest?.messages && viewingAnalysis.contest.messages.length > 0 && (
+                      <div className="space-y-3 mb-4 max-h-[300px] overflow-y-auto pr-2">
+                        {viewingAnalysis.contest.messages.map(msg => (
+                          <div key={msg.id} className={`p-3 rounded-lg border shadow-sm ${
+                            msg.sender_role === 'Monitor' || msg.sender_name === viewingAnalysis.monitor_name
+                              ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800 ml-8' 
+                              : 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800 mr-8'
+                          }`}>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{msg.sender_name} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">({msg.sender_role})</span></span>
+                              <span className="text-xs text-slate-500 dark:text-slate-400">{new Date(msg.created_at).toLocaleString()}</span>
+                            </div>
+                            <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{msg.message}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {(canContest || currentUser.name === viewingAnalysis.monitor_name) && (!viewingAnalysis.contest || viewingAnalysis.contest.status !== 'cancelada') && (
+                      <div className="flex gap-2 items-end">
+                        <div className="flex-1">
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">
+                            Nova Mensagem
+                          </label>
+                          <textarea
+                            value={contestMessage}
+                            onChange={(e) => setContestMessage(e.target.value)}
+                            placeholder="Descreva o motivo da contestação ou responda..."
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-amber-500/50 outline-none resize-none text-sm dark:text-white"
+                            rows={3}
+                          />
+                        </div>
+                        <button
+                          onClick={handleContestSubmit}
+                          disabled={!contestMessage.trim() || submittingContest}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-md shadow-sm disabled:opacity-50 transition-colors flex items-center gap-2 font-medium h-[42px] mb-[2px]"
+                        >
+                          <Send className="w-4 h-4" />
+                          Enviar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">

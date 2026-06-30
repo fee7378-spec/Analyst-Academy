@@ -37,7 +37,8 @@ const DEFAULT_PERMISSIONS = {
   perfis: 'none',
   perfil: 'view',
   esteiras: 'none',
-  processamento: 'none'
+  processamento: 'none',
+  contestacoes: 'none'
 };
 
 const ADMIN_PERMISSIONS = {
@@ -48,7 +49,8 @@ const ADMIN_PERMISSIONS = {
   perfis: 'edit',
   perfil: 'edit',
   esteiras: 'edit',
-  processamento: 'edit'
+  processamento: 'edit',
+  contestacoes: 'edit'
 };
 
 const initDb = async () => {
@@ -770,6 +772,30 @@ export const api = {
       await logAction('Excluir Usuário', `Usuário ID ${id} excluído`);
     }
     return { success: true };
+  },
+
+  async getNotifications(userEmail: string) {
+    const snapshot = await get(ref(db, getPath('notifications')));
+    if (!snapshot.exists()) return [];
+    const all = Object.values(snapshot.val()) as any[];
+    return all.filter(n => n.user_email === userEmail).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+
+  async createNotification(data: any) {
+    const newRef = push(ref(db, getPath('notifications')));
+    const notification = { ...data, id: newRef.key, created_at: new Date().toISOString(), read: false };
+    await set(newRef, notification);
+    return notification;
+  },
+
+  async markNotificationRead(id: string) {
+    const snapshot = await get(ref(db, getPath('notifications')));
+    if (!snapshot.exists()) return;
+    const notifsObj = snapshot.val();
+    const key = Object.keys(notifsObj).find(k => notifsObj[k].id === id || k === id);
+    if (key) {
+      await update(ref(db, getPath(`notifications/${key}`)), { read: true });
+    }
   },
 
   async getDashboard(params?: { track?: string; analyst_id?: string; start_date?: string; end_date?: string }) {
