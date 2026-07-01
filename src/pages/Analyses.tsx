@@ -109,7 +109,7 @@ export const Analyses: React.FC<{ mode: 'list' | 'form' }> = ({ mode }) => {
   const canEditHistorico = currentUser.role === 'Administrador' || permissions['historico'] === 'edit';
   const canClearHistorico = currentUser.role === 'Administrador';
   const canViewHistorico = currentUser.role === 'Administrador' || permissions['historico'] !== 'none';
-  const canEditNovaMonitoria = currentUser.role === 'Administrador' || permissions['esteiras'] === 'edit';
+  const canEditNovaMonitoria = currentUser.role === 'Administrador' || currentUser.role === 'Monitor' || permissions['esteiras'] === 'edit' || permissions['esteiras'] === 'view';
   const canImportMonitoria = canEditNovaMonitoria || permissions['esteiras'] === 'view';
   const canViewAnalysts = currentUser.role === 'Administrador' || permissions['analistas'] !== 'none';
   const canContest = currentUser.role === 'Administrador' || currentUser.role === 'Supervisor' || permissions['contestacoes'] === 'edit';
